@@ -34,7 +34,7 @@ This will take a while.
 
 To set up local IDE functionality:
 1. Make a virtual environment, ensure it has the packages from requirements.txt installed
-2. Open cmd and navigate to the directory labled 'openmc_clone', from there run the following:
+2. Create a directory to hold the openmc files, e.g 'openmc_clone', from there open cmd and run the following:
    
         git clone --recurse-submodules https://github.com/openmc-dev/openmc.git
 3. Make sure your virtual environment is active!
