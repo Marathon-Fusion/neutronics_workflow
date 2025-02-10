@@ -11,6 +11,8 @@ This repository contains a set of example scripts for running a full simulation 
 
  This workflow also includes a set of packages that are useful for OpenMC simulations such as Paramak, openmc_plasma_source, CAD_to_OpenMC and openmc_source_plotter.
 
+ This repo borrows a lot from the fusion energy neutronics workshop https://github.com/fusion-energy/neutronics-workshop
+
 ## To Install
 
 A pre-existing file structure is in place and installed by cloning the whole repository. The instructions below are tailored to this file structure but this is far from mandatory - handle your files as you please!
@@ -51,7 +53,7 @@ To run python scripts input navigate to the 'Code' directory and input the follo
 In the /src/ folder is a set of scripts and a .step file of a simplified example Tokamak reactor. The following instructions detail how to use these scripts to perform an OpenMC simulation tallying the damage energy & neutron flux in the different components of the Tokamak and how to process the simulation results to be visualised in Paraview.
 
 ### h5mconverter.py
-This script converts a .step CAD file to a .h5m file for use as DAGMC geometry. A set of intemdiary .stl files are also created than can be used to create .exo files for use as unstructured meshes.
+This script converts a .step CAD file to a .h5m file for use as DAGMC geometry. A set of intermdeiary .stl files are also created than can be used to create .exo files for use as unstructured meshes.
 
 ### mesh_converter.py
 Converts .stl files to .exo files. The settings of this can be adjusted by changing the Max and Min mesh size parameters in remesh.py
