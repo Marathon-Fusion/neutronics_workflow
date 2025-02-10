@@ -44,7 +44,7 @@ Note that the above does not allow you to run python/openmc scripts from within 
 
 To run python scripts input navigate to the 'Code' directory and input the following in cmd:
 
-    docker run -v ${PWD}/workspace:/opt/marathon/workspace --rm kica/openmc-python src/<name_of_script>.py
+    docker run -v ${PWD}/workspace:/opt/marathon/workspace --rm kica/openmc-base src/<name_of_script>.py
 
 ## Example Usage
 
