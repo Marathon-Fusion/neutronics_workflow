@@ -19,11 +19,11 @@ First obtain the Docker desktop app, found here:
 https://www.docker.com/products/docker-desktop/
 
 Install Paraview for data visualisation purposes, found here:
-PARAVIEW LINK
+https://www.paraview.org/
 
 Navigate to the directory you wish to install in and use as your workspace and clone the repository:
 
-    git clone https://github.com/YOUR-USERNAME/YOUR-REPOSITORY
+    git clone https://github.com/jakemarathon/neutronics_workflow/
 
 Open cmd and navigate to the directory containing the docker file, from there run
 
@@ -62,4 +62,9 @@ Creates and runs an OpenMC neutronics simulation of the example tokamak with an 
 ### tokamakadataprocessing.py
 Processes the data normalising it by reactor power and by volume to output .vtk files of the neutron flux and rough estimation of DPA per full power year for visualisation in paraview.
 
+## Notes and Quirks
+Currently only python scripts are supported. Jupyter functionality will be added ASAP.
 
+For some reason the unstructured mesh tallies made by this workflow have 'negative' volume, this is easily corrected for by multiplying the tally data by -1 as shown in the data_processing.py script. Have some suspicions as to what causes this and should hopefully be fixed soon!
+
+Implicit volume/material tagging for DAGMC geometry can be weird. I found consistent results naming the individual body names '<material_name>_<object>' in the CAD software before exporting the entire assembly as a single .stp file
