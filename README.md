@@ -67,4 +67,4 @@ Currently only python scripts are supported. Jupyter functionality will be added
 
 For some reason the unstructured mesh tallies made by this workflow have 'negative' volume, this is easily corrected for by multiplying the tally data by -1 as shown in the data_processing.py script. Have some suspicions as to what causes this and should hopefully be fixed soon!
 
-Implicit volume/material tagging for DAGMC geometry can be weird. I found consistent results naming the individual body names '<material_name>_<object>' in the CAD software before exporting the entire assembly as a single .stp file
+Implicit volume/material tagging for DAGMC geometry can be weird. I found consistent results naming the individual body names '<material_name>_<body_name>' in the CAD software before exporting the entire assembly as a single .stp file
