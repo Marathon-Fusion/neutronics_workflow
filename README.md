@@ -7,11 +7,9 @@ This workflow is deployed and ran in a containerised manner using Docker.
 
 This repository contains a set of example scripts for running a full simulation from a .step file through to data processing and visualising using Paraview.
 
- generating .exo mesh files from .stl files said unstructured mesh tallies. A script is also included that creates .h5m files from .stp files using the tool CAD_to_OpenMC. The intermediary STL files created by the .h5m creation can be used to create .exo meshes.
+This workflow also includes a set of packages that are useful for OpenMC simulations such as Paramak, openmc_plasma_source, CAD_to_OpenMC and openmc_source_plotter.
 
- This workflow also includes a set of packages that are useful for OpenMC simulations such as Paramak, openmc_plasma_source, CAD_to_OpenMC and openmc_source_plotter.
-
- This repo borrows a lot from the fusion energy neutronics workshop https://github.com/fusion-energy/neutronics-workshop
+This repo borrows a lot from the fusion energy neutronics workshop https://github.com/fusion-energy/neutronics-workshop
 
 ## To Install
 
