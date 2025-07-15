@@ -1,0 +1,73 @@
+ ACELST - List contents of an ACE-lib   
+ ====================================   
+
+  80-Hg-198  293.6 K fast data for ADS+ library                       
+                          Source file : \ADS\ACE\Hg198.ACE                      
+             Material ZAID identifier :  80198.70c
+                         Processed on :   06/10/08
+                       MAT identifier :    mat8031
+                  Atomic weight ratio :  196.26600
+                      Temperature [K] :        293.6
+             Upper energy limit [MeV] :        150.0
+                    Data table length :     172903
+              Number of energy points :       3258
+               Photon production data : Discrete reactions given                
+             WARNING - also specified : Matrix of secondary photon energies     
+
+ Summary table legend:                  
+    MT -ENDF reaction MT number         
+     Q -Reaction Q value                
+     n -number of outgoing neutrons and cordinate system for angular distrib.   
+        (CM=centre-of-mass, LA=lab)     
+ Angle -Type of distribution (Isotr. or Law 44)                                 
+        or "Aen mm" for tabulated distributions at mm energy points             
+ E-law -Secondary neutron energy distribution law index list                    
+    Ty -Photon production cross section source (12=MF12, 13=MF13, 16=MF 6)      
+
+ Cross sections (excluding elastic)       Photon Production                     
+   MT    Q [MeV]     n  Angle E-law       MT Ty  Angle E-law                    
+ ----------------------------------     ----------------------------            
+    2  0.0000E+00 CM 1 Aen155  0          16 12 Isotr. 4                        
+    5  0.0000E+00 CM01 Isotr. 44          17 12 Isotr. 4                        
+   16 -8.3007E+00 LA 2 Isotr.  4          22 12 Isotr. 4                        
+   17 -1.5281E+01 LA 3 Isotr.  4          28 12 Isotr. 4                        
+   22  1.3331E+00 LA 1 Isotr.  4          51 12 Isotr. 2                        
+   28 -7.1032E+00 LA 1 Isotr.  4          52 12 Isotr. 2, Isotr. 2              
+   51 -4.1180E-01 CM 1 Aen 23  3          53 12 Isotr. 2, Isotr. 2, Isotr. 2    
+   52 -1.0485E+00 CM 1 Aen 18  3          54 12 Isotr. 2, Isotr. 2              
+   53 -1.0877E+00 CM 1 Aen 18  3          55 12 Isotr. 2, Isotr. 2, Isotr. 2,   
+   54 -1.4015E+00 CM 1 Aen 17  3                Isotr. 2, Isotr. 2, Isotr. 2,   
+   55 -1.4194E+00 CM 1 Aen  6  3                Isotr. 2                        
+   56 -1.5485E+00 CM 1 Aen  6  3          56 12 Isotr. 2, Isotr. 2, Isotr. 2    
+   57 -1.6124E+00 CM 1 Aen  6  3          57 12 Isotr. 2, Isotr. 2, Isotr. 2,   
+   58 -1.6356E+00 CM 1 Aen 16  3                Isotr. 2, Isotr. 2              
+   59 -1.6833E+00 CM 1 Aen 16  3          58 12 Isotr. 2, Isotr. 2, Isotr. 2    
+   60 -1.7600E+00 CM 1 Aen  6  3          59 12 Isotr. 2, Isotr. 2, Isotr. 2,   
+   61 -1.8158E+00 CM 1 Aen  6  3                Isotr. 2                        
+   62 -1.8325E+00 CM 1 Aen  6  3          60 12 Isotr. 2, Isotr. 2, Isotr. 2    
+   63 -1.8349E+00 CM 1 Aen 16  3          61 12 Isotr. 2, Isotr. 2, Isotr. 2    
+   64 -1.8472E+00 CM 1 Aen  6  3          62 12 Isotr. 2, Isotr. 2, Isotr. 2,   
+   65 -1.8588E+00 CM 1 Aen  6  3                Isotr. 2, Isotr. 2, Isotr. 2    
+   66 -1.8993E+00 CM 1 Aen  6  3          63 12 Isotr. 2, Isotr. 2, Isotr. 2,   
+   67 -1.9014E+00 CM 1 Aen  6  3                Isotr. 2, Isotr. 2, Isotr. 2    
+   68 -1.9097E+00 CM 1 Aen  6  3          64 12 Isotr. 2, Isotr. 2, Isotr. 2,   
+   69 -1.9108E+00 CM 1 Aen  6  3                Isotr. 2, Isotr. 2, Isotr. 2,   
+   91 -1.9110E+00 LA 1 Aen  6  4                Isotr. 2, Isotr. 2, Isotr. 2,   
+  102  6.6490E+00                               Isotr. 2, Isotr. 2              
+  103 -5.9053E-01                         65 12 Isotr. 2, Isotr. 2, Isotr. 2,   
+  104 -4.8786E+00                               Isotr. 2, Isotr. 2, Isotr. 2,   
+  107  7.4577E+00                               Isotr. 2, Isotr. 2              
+  203  0.0000E+00                         66 12 Isotr. 2, Isotr. 2, Isotr. 2,   
+  204  0.0000E+00                               Isotr. 2, Isotr. 2              
+  205  0.0000E+00                         67 12 Isotr. 2, Isotr. 2, Isotr. 2,   
+  207  0.0000E+00                               Isotr. 2                        
+  444  0.0000E+00                         68 12 Isotr. 2, Isotr. 2, Isotr. 2,   
+                                                Isotr. 2, Isotr. 2, Isotr. 2    
+                                          69 12 Isotr. 2, Isotr. 2, Isotr. 2,   
+                                                Isotr. 2, Isotr. 2              
+                                          91 12 Isotr. 4                        
+                                         102 12 Isotr. 4                        
+                                         103 12 Isotr. 4                        
+                                         104 12 Isotr. 4                        
+                                         107 12 Isotr. 4                        
+                                           5 16 Isotr. 4                        
