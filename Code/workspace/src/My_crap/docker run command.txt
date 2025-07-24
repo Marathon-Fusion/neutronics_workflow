@@ -1,1 +1,1 @@
-docker run -v C:\Users\lowin\Documents\GitHub\neutronics_workflow\Code\workspace\src\My_crap:/opt/marathon/workspace --rm kica/openmc-base .ace_data_reader.py
+docker run -v C:\Users\lowin\Documents\GitHub\chrysopoeia-paper\neutronics_workflow\Code\workspace\src:/opt/marathon/workspace --rm kica/openmc-base .[FILE].py
