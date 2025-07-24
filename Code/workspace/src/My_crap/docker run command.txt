@@ -1,1 +1,0 @@
-docker run -v C:\Users\lowin\Documents\GitHub\neutronics_workflow\Code\workspace\src:/opt/marathon/workspace --rm kica/openmc-base .[FILE].py
