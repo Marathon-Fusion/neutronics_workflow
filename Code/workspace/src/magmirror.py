@@ -5,16 +5,22 @@ import pandas as pd
 # Define cylinder length
 cylinder_length = 100.0
 
-# Define the radial layers with their names and radii
-radial_layers = [
+layers_thicknesses = [
     ("source + gap", 1260), #1260 thickness
-    ("first wall", 1265), #5
-    ("structural1", 1275), #10
-    ("channel", 1485), #210, design point chosen for chrysopoeia paper
-    ("structural2", 1515), #30
-    ("blanket", 2015), #500, very rough estimate from design point
-    ("blanketouter", 2045) #30
+    ("first wall", 5),
+    ("structural1", 10),
+    ("channel", 210), #design point chosen for chrysopoeia paper
+    ("structural2", 30), #30
+    ("blanket", 500), #very rough estimate from design point of paper
+    ("blanketouter", 30)
 ]
+
+radial_layers = []
+for i, (name, thickness) in enumerate(layers_thicknesses):
+    if i == 0:
+        radial_layers.append((name, thickness))
+    else:
+        radial_layers.append((name, thickness+radial_layers[i-1][1]))
 
 #First wall#
 tungsten = openmc.Material(name='tungsten')
@@ -150,15 +156,15 @@ geometry = openmc.Geometry(cells)
 
 # Create plots to visualize the radial structure
 # XY plot (radial view)
-plot_xy = geometry.plot(width=(700, 700), pixels=(1000, 1000), origin=(0, 0, 0), basis='xy')
+plot_xy = geometry.plot(width=(5000, 5000), pixels=(1000, 1000), origin=(0, 0, 0), basis='xy')
 plot_xy.figure.savefig('radial_build_xy.png')
 
 # XZ plot (longitudinal view)
-plot_xz = geometry.plot(width=(700, 700), pixels=(1000, 1000), origin=(0, 0, 0), basis='xz')
+plot_xz = geometry.plot(width=(5000, 5000), pixels=(1000, 1000), origin=(0, 0, 0), basis='xz')
 plot_xz.figure.savefig('radial_build_xz.png')
 
 # YZ plot (longitudinal view)
-plot_yz = geometry.plot(width=(700, 700), pixels=(1000, 1000), origin=(0, 0, 0), basis='yz')
+plot_yz = geometry.plot(width=(5000, 5000), pixels=(1000, 1000), origin=(0, 0, 0), basis='yz')
 plot_yz.figure.savefig('radial_build_yz.png')
 
 # Print layer information
@@ -185,15 +191,20 @@ n_source.energy = openmc.stats.Discrete([14.1e6], [1.0]) #14.1MeV neutrons only
 #sourceplot = plot_source_position(n_source)
 #sourceplot.write_html("./n_source_plotted.html")
 
-surface_filter = openmc.SurfaceFilter(bins=cylinders[-1])
+surface_filter = openmc.SurfaceFilter(bins=[cylinders[-1]])
 n_filter = openmc.ParticleFilter(['neutron'])
 
 surface_tally = openmc.Tally(name="Neutron flux at outer cylinder")
 surface_tally.filters = [surface_filter, n_filter]
 surface_tally.scores = ['current']
 
+flux_tally = openmc.Tally(name="Flux in last shielding cell")
+flux_tally.filters = [openmc.CellFilter(cells[-1]), openmc.ParticleFilter(['neutron'])]
+flux_tally.scores = ['flux']
+
 tallies = openmc.Tallies()
 tallies.append(surface_tally)
+tallies.append(flux_tally)
 
 settings = openmc.Settings()
 settings.source = n_source
@@ -206,7 +217,10 @@ model = openmc.Model(geometry=geometry, settings=settings, tallies=tallies)
 results_sp = model.run()
 
 results = openmc.StatePoint(results_sp)
+for t in results.tallies.values():
+    print(t.name)
 
-surface_tally_results = results.get_tally("Neutron flux at outer cylinder")
+#surface_tally_results = results.get_tally("Neutron flux at outer cylinder")
+#flux_tally_results = results.get_tally("Flux in last shielding cell")
 
-print(f"Tally:\n{surface_tally_results}")
+#print(f"Tally:\n{surface_tally_results}")
