@@ -4,3 +4,9 @@
    Particle: neutron
      Total Material
        Current                              0 +/- 0
+ =============>     TALLY 2: FLUX IN LAST SHIELDING CELL     <==============
+
+ Cell 7
+   Particle: neutron
+     Total Material
+       Flux                                 0.00064666 +/- 0.000344958

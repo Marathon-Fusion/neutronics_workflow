@@ -9,9 +9,9 @@ layers_thicknesses = [
     ("source + gap", 1260), #1260 thickness
     ("first wall", 5),
     ("structural1", 10),
-    ("channel", 210), #design point chosen for chrysopoeia paper
+    ("channel", 21), #design point chosen for chrysopoeia paper
     ("structural2", 30), #30
-    ("blanket", 500), #very rough estimate from design point of paper
+    ("blanket", 50), #very rough estimate from design point of paper
     ("blanketouter", 30)
 ]
 
@@ -192,6 +192,7 @@ n_source.energy = openmc.stats.Discrete([14.1e6], [1.0]) #14.1MeV neutrons only
 #sourceplot.write_html("./n_source_plotted.html")
 
 surface_filter = openmc.SurfaceFilter(bins=[cylinders[-1]])
+surface_filter.direction = 'both'
 n_filter = openmc.ParticleFilter(['neutron'])
 
 surface_tally = openmc.Tally(name="Neutron flux at outer cylinder")
@@ -208,8 +209,8 @@ tallies.append(flux_tally)
 
 settings = openmc.Settings()
 settings.source = n_source
-settings.batches = 10
-settings.particles = 1000
+settings.batches = 20
+settings.particles = 10000
 settings.run_mode = 'fixed source'
 
 model = openmc.Model(geometry=geometry, settings=settings, tallies=tallies)
@@ -217,8 +218,6 @@ model = openmc.Model(geometry=geometry, settings=settings, tallies=tallies)
 results_sp = model.run()
 
 results = openmc.StatePoint(results_sp)
-for t in results.tallies.values():
-    print(t.name)
 
 #surface_tally_results = results.get_tally("Neutron flux at outer cylinder")
 #flux_tally_results = results.get_tally("Flux in last shielding cell")
