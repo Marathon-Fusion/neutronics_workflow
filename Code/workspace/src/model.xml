@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<model>
+  <materials>
+  </materials>
+  <geometry>
+    <cell id="8" material="void" region="-10" universe="2"/>
+    <surface boundary="vacuum" coeffs="0.0 0.0 0.0 99999999999" id="10" type="sphere"/>
+  </geometry>
+  <settings>
+    <run_mode>eigenvalue</run_mode>
+    <particles>1</particles>
+    <batches>1</batches>
+    <source particle="neutron" strength="1.0" type="independent">
+      <space type="cartesian">
+        <x type="discrete">
+          <parameters>0.0 1.0</parameters>
+        </x>
+        <y type="discrete">
+          <parameters>0.0 1.0</parameters>
+        </y>
+        <z parameters="-50.0 50.0" type="uniform"/>
+      </space>
+      <angle type="isotropic"/>
+      <energy type="discrete">
+        <parameters>14100000.0 1.0</parameters>
+      </energy>
+    </source>
+  </settings>
+  </model>
