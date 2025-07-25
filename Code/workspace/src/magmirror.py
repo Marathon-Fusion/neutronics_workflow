@@ -1,6 +1,6 @@
 import openmc
-from openmc_source_plotter import plot_source_position
-import matplotlib.pyplot as plt
+import openmc_source_plotter 
+import pandas as pd
 
 # Define cylinder length
 cylinder_length = 100.0
@@ -175,10 +175,38 @@ print(f"\nTotal radius: {radial_layers[-1][1]:.1f} cm")
 print(f"Cylinder length: {cylinder_length:.1f} cm")
 
 n_source = openmc.IndependentSource()
+
+#line source along z axis
 n_source.space = openmc.stats.CartesianIndependent(openmc.stats.Discrete([0.0], [1.0]), #x=0
                                                    openmc.stats.Discrete([0.0], [1.0]), #y=0
                                                    openmc.stats.Uniform(-cylinder_length/2, cylinder_length/2)) #z up to boundaries of cylinder
 n_source.angle = openmc.stats.Isotropic()
-n_source.energy = openmc.stats.Discrete([14.1e6], [1.0])
-sourceplot = plot_source_position(n_source)
-sourceplot.write_html("./n_source_plotted.html")
+n_source.energy = openmc.stats.Discrete([14.1e6], [1.0]) #14.1MeV neutrons only
+#sourceplot = plot_source_position(n_source)
+#sourceplot.write_html("./n_source_plotted.html")
+
+surface_filter = openmc.SurfaceFilter(bins=cylinders[-1])
+n_filter = openmc.ParticleFilter(['neutron'])
+
+surface_tally = openmc.Tally(name="Neutron flux at outer cylinder")
+surface_tally.filters = [surface_filter, n_filter]
+surface_tally.scores = ['current']
+
+tallies = openmc.Tallies()
+tallies.append(surface_tally)
+
+settings = openmc.Settings()
+settings.source = n_source
+settings.batches = 100
+settings.inactive = 10
+settings.particles = 1000
+
+model = openmc.Model(geometry=geometry, settings=settings, tallies=tallies)
+
+results_filename = model.run()
+
+results = openmc.StatePoint(results_filename)
+
+surface_tally_results = results.get_tally("Neutron flux at outer cylinder")
+
+print(f"Tally:\n{surface_tally_results}")
