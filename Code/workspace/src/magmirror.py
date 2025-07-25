@@ -197,15 +197,15 @@ tallies.append(surface_tally)
 
 settings = openmc.Settings()
 settings.source = n_source
-settings.batches = 100
-settings.inactive = 10
+settings.batches = 10
 settings.particles = 1000
+settings.run_mode = 'fixed source'
 
 model = openmc.Model(geometry=geometry, settings=settings, tallies=tallies)
 
-results_filename = model.run()
+results_sp = model.run()
 
-results = openmc.StatePoint(results_filename)
+results = openmc.StatePoint(results_sp)
 
 surface_tally_results = results.get_tally("Neutron flux at outer cylinder")
 

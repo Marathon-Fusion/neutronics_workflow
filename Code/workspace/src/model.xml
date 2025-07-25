@@ -116,7 +116,7 @@
     <surface coeffs="0.0 0.0 2045" id="9" type="z-cylinder"/>
   </geometry>
   <settings>
-    <run_mode>eigenvalue</run_mode>
+    <run_mode>fixed source</run_mode>
     <particles>1000</particles>
     <batches>100</batches>
     <inactive>10</inactive>
