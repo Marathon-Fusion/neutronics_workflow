@@ -110,15 +110,15 @@
     <surface coeffs="0.0 0.0 1260" id="3" type="z-cylinder"/>
     <surface coeffs="0.0 0.0 1265" id="4" type="z-cylinder"/>
     <surface coeffs="0.0 0.0 1275" id="5" type="z-cylinder"/>
-    <surface coeffs="0.0 0.0 1296" id="6" type="z-cylinder"/>
-    <surface coeffs="0.0 0.0 1326" id="7" type="z-cylinder"/>
-    <surface coeffs="0.0 0.0 1376" id="8" type="z-cylinder"/>
-    <surface coeffs="0.0 0.0 1406" id="9" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 1485" id="6" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 1515" id="7" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 2015" id="8" type="z-cylinder"/>
+    <surface boundary="vacuum" coeffs="0.0 0.0 2045" id="9" type="z-cylinder"/>
   </geometry>
   <settings>
     <run_mode>fixed source</run_mode>
-    <particles>10000</particles>
-    <batches>20</batches>
+    <particles>1000000</particles>
+    <batches>10</batches>
     <source particle="neutron" strength="1.0" type="independent">
       <space type="cartesian">
         <x type="discrete">

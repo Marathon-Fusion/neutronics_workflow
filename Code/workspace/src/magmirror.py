@@ -9,9 +9,9 @@ layers_thicknesses = [
     ("source + gap", 1260), #1260 thickness
     ("first wall", 5),
     ("structural1", 10),
-    ("channel", 21), #design point chosen for chrysopoeia paper
+    ("channel", 210), #design point chosen for chrysopoeia paper
     ("structural2", 30), #30
-    ("blanket", 50), #very rough estimate from design point of paper
+    ("blanket", 500), #very rough estimate from design point of paper
     ("blanketouter", 30)
 ]
 
@@ -118,8 +118,11 @@ z_max = openmc.ZPlane(z0=cylinder_length/2, boundary_type='reflective')
 
 # Create cylinders for each radius
 cylinders = []
-for name, radius in radial_layers:
-    cylinders.append(openmc.ZCylinder(r=radius))
+for i, (name, radius) in enumerate(radial_layers):
+    if i != len(radial_layers)-1:
+        cylinders.append(openmc.ZCylinder(r=radius))
+    else:
+        cylinders.append(openmc.ZCylinder(r=radius, boundary_type='vacuum')) #last cylinder has vacuum boundary, all others are transmissive
 
 # Create cells for each layer
 cells = []
@@ -209,8 +212,8 @@ tallies.append(flux_tally)
 
 settings = openmc.Settings()
 settings.source = n_source
-settings.batches = 20
-settings.particles = 10000
+settings.batches = 10
+settings.particles = 1000000
 settings.run_mode = 'fixed source'
 
 model = openmc.Model(geometry=geometry, settings=settings, tallies=tallies)
