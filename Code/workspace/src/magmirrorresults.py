@@ -22,6 +22,7 @@ def mesh_tally_to_vtk():
     mesh_tally_results = results.get_tally(name="Neutron flux in mesh")
 
     mesh = mesh_tally_results.find_filter(openmc.MeshFilter).mesh
+    #print(mesh)
     flux = mesh_tally_results.get_values(scores=['flux'], value='mean')
 
     mesh.write_data_to_vtk(filename="neutron_flux.vtk", datasets={"mean": flux})

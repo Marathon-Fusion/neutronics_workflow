@@ -202,8 +202,9 @@ def volumetric_neutron_flux_tally():
     #set up mesh for flux visualisation
     rgrid = np.arange(0, outer_rad, 0.25)
     zgrid = np.arange(-cylinder_length/2, cylinder_length/2, 0.25)
+    phigrid = np.arange(0, 2*np.pi, 1*np.pi/180) #1 degree steps
 
-    mesh = openmc.CylindricalMesh(rgrid, zgrid)
+    mesh = openmc.CylindricalMesh(rgrid, zgrid, phigrid)
     mesh_filter = openmc.MeshFilter(mesh)
 
     n_filter = openmc.ParticleFilter(['neutron'])
@@ -245,7 +246,7 @@ tallies.append(volumetric_neutron_flux_tally())
 settings = openmc.Settings()
 settings.source = n_source
 settings.batches = 10
-settings.particles = 100000
+settings.particles = 1000
 settings.run_mode = 'fixed source'
 
 model = openmc.Model(geometry=geometry, settings=settings, tallies=tallies)
