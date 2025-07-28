@@ -1,19 +1,22 @@
 import openmc
 import openmc_source_plotter 
 import pandas as pd
+import numpy as np
 
 # Define cylinder length
 cylinder_length = 100.0
 
 layers_thicknesses = [
-    ("source + gap", 1260), #1260 thickness
-    ("first wall", 5),
-    ("structural1", 10),
-    ("channel", 210), #design point chosen for chrysopoeia paper
-    ("structural2", 30), #30
-    ("blanket", 500), #very rough estimate from design point of paper
-    ("blanketouter", 30)
+    ("source + gap", 126), #1260 thickness
+    ("first wall", 0.5),
+    ("structural1", 1),
+    ("channel", 21), #design point chosen for chrysopoeia paper
+    ("structural2", 3), #30
+    ("blanket", 50), #very rough estimate from design point of paper
+    ("blanketouter", 3)
 ]
+
+outer_rad = sum([thickness for (name, thickness) in layers_thicknesses])
 
 radial_layers = []
 for i, (name, thickness) in enumerate(layers_thicknesses):
@@ -137,8 +140,7 @@ for i, (name, radius) in enumerate(radial_layers):
     cell = openmc.Cell(name=name, region=region)
     # Create cell with appropriate material based on layer type
     if "gap" in name:
-        # Void regions - no material (vacuum)
-        pass
+        cell.fill = None #no material, vacuum
     elif name=="first wall":
         cell.fill = tungsten
     elif "structural" in name: #applies to structural1 and structural2
@@ -194,35 +196,58 @@ n_source.energy = openmc.stats.Discrete([14.1e6], [1.0]) #14.1MeV neutrons only
 #sourceplot = plot_source_position(n_source)
 #sourceplot.write_html("./n_source_plotted.html")
 
-surface_filter = openmc.SurfaceFilter(bins=[cylinders[-1]])
-surface_filter.direction = 'both'
-n_filter = openmc.ParticleFilter(['neutron'])
+def volumetric_neutron_flux_tally():
+    "Returns an openmc.Tally object for neutron flux through each element of a mesh"
 
-surface_tally = openmc.Tally(name="Neutron flux at outer cylinder")
-surface_tally.filters = [surface_filter, n_filter]
-surface_tally.scores = ['current']
+    #set up mesh for flux visualisation
+    rgrid = np.arange(0, outer_rad, 0.25)
+    zgrid = np.arange(-cylinder_length/2, cylinder_length/2, 0.25)
 
-flux_tally = openmc.Tally(name="Flux in last shielding cell")
-flux_tally.filters = [openmc.CellFilter(cells[-1]), openmc.ParticleFilter(['neutron'])]
-flux_tally.scores = ['flux']
+    mesh = openmc.CylindricalMesh(rgrid, zgrid)
+    mesh_filter = openmc.MeshFilter(mesh)
+
+    n_filter = openmc.ParticleFilter(['neutron'])
+
+    mesh_tally = openmc.Tally(name="Neutron flux in mesh")
+    mesh_tally.filters = [mesh_filter, n_filter]
+    mesh_tally.scores=['flux']
+
+    return mesh_tally
+
+def surface_neutron_current_tally():
+    """Returns an openmc.Tally object for neutron current across the outer cylindrical surface with energy bins"""
+
+    #filter around outer surface
+    surface_filter = openmc.SurfaceFilter(bins=[cylinders[-1]])
+    surface_filter.direction = 'both'
+
+    #filter for neutrons
+    n_filter = openmc.ParticleFilter(['neutron'])
+
+    #filter for energies between 0.01eV (less than thermal) and 14.1MeV
+    e_filter = openmc.EnergyFilter(values=np.logspace(-2, 7.15, 100))
+
+    surface_tally = openmc.Tally(name="Neutron current at outer cylinder surface")
+    surface_tally.filters = [surface_filter, n_filter, e_filter]
+    surface_tally.scores = ['current']
+
+    # flux_tally = openmc.Tally(name="Flux in last shielding cell")
+    # flux_tally.filters = [openmc.CellFilter(cells[-1]), n_filter]
+    # flux_tally.scores = ['flux']
+
+    return surface_tally
 
 tallies = openmc.Tallies()
-tallies.append(surface_tally)
-tallies.append(flux_tally)
+#tallies.append(surface_neutron_current_tally())
+tallies.append(volumetric_neutron_flux_tally())
+#tallies.append(flux_tally)
 
 settings = openmc.Settings()
 settings.source = n_source
 settings.batches = 10
-settings.particles = 1000000
+settings.particles = 100000
 settings.run_mode = 'fixed source'
 
 model = openmc.Model(geometry=geometry, settings=settings, tallies=tallies)
 
-results_sp = model.run()
-
-results = openmc.StatePoint(results_sp)
-
-#surface_tally_results = results.get_tally("Neutron flux at outer cylinder")
-#flux_tally_results = results.get_tally("Flux in last shielding cell")
-
-#print(f"Tally:\n{surface_tally_results}")
+model.run()
