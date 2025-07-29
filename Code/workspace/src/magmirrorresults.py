@@ -39,17 +39,22 @@ def plot_surface_current(particle="neutron", normalise = True):
         if normalise == True:
             current = resultsdf["mean"]
         else:
-            with open('n_per_year_per_slice.txt', 'r') as input:
+            with open(os.path.join(results_dir, 'n_per_year_per_slice.txt'), 'r') as input:
                 n_per_year_per_slice = input.read()
-            current = resultsdf["mean"]*n_per_year_per_slice
+            current = resultsdf["mean"]*float(n_per_year_per_slice)
         
         plt.clf() # clears any existing plot
         plt.semilogx(lowenergies, current)
-        plt.title(f"{particle_cap} Surface Current", fontsize = 16)
+        if normalise == True:
+            normal_str = "normalised per source neutron"
+        else:
+            normal_str = "per year in given reaction slice"
+        plt.title(f"{particle_cap} Surface Current, {normal_str}", fontsize = 16)
         plt.xlabel(f"{particle_cap} energy (eV)", fontsize = 14)
-        plt.ylabel("Normalised current", fontsize = 14)
+        plt.ylabel("Current", fontsize = 14)
         plt.tight_layout()
         plt.savefig(os.path.join(results_dir, f"{particle}_surface_current.png"))
+        print(f"Saved {particle} leakage graph to {particle}_surface_current.png")
     except Exception as e:
         print(f"No surface current tally for {particle}: {e}")
 
@@ -81,9 +86,9 @@ def mesh_tally_to_vtk(particle="neutron", normalise = True):
         if normalise == True:
             flux = mesh_tally_results.get_values(scores=['flux'], value='mean')
         else:
-            with open('n_per_year_per_slice.txt', 'r') as input:
+            with open(os.path.join(results_dir, 'n_per_year_per_slice.txt'), 'r') as input:
                 n_per_year_per_slice = input.read()
-            flux = mesh_tally_results.get_values(scores=['flux'], value='mean')*n_per_year_per_slice
+            flux = mesh_tally_results.get_values(scores=['flux'], value='mean')*float(n_per_year_per_slice)
         vtk_filename = os.path.join(results_dir, f"{particle}_flux.vtk")
         mesh.write_data_to_vtk(filename=vtk_filename, datasets={"mean": flux})
         print(f"Exported {particle} flux to {vtk_filename}")
@@ -95,4 +100,4 @@ mesh_tally_to_vtk("neutron")
 mesh_tally_to_vtk("photon")
 
 plot_surface_current("photon")
-plot_surface_current("neutron")
+plot_surface_current("neutron", normalise=False)
