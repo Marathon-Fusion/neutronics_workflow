@@ -35,7 +35,7 @@ This will take a while.
 
 1. From the `Code` directory or your preferred location, run:
 
-    python -m venv venv
+        python -m venv venv
 
 2. Activate the virtual environment:
 
@@ -44,7 +44,7 @@ This will take a while.
    
 3. Install the project requirements:
 
-    pip install -r requirements.txt
+        pip install -r requirements.txt
 
 **To clone OpenMC**
    
