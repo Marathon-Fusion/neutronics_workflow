@@ -5,18 +5,37 @@ import matplotlib.pyplot as plt
 
 results = openmc.StatePoint("statepoint.10.h5")
 
-def plot_surface_current():
-    surface_tally_results = results.get_tally(name="Neutron current at outer cylinder surface")
-    resultsdf = surface_tally_results.get_pandas_dataframe()
-    #flux_tally_results = results.get_tally("Flux in last shielding cell")
 
-    lowenergies = resultsdf["energy low [eV]"]
-    current = resultsdf["mean"]
+def plot_surface_current(particle="neutron"):
+    """
+    Plot the surface current as a function of energy for the specified particle type.
+    
+    Parameters
+    ---------
+    particle : str, optional
+        The type of particle mesh tally to export ('neutron' or 'photon').
+        Default is 'neutron'.
 
-    plt.semilogx(lowenergies, current)
-    plt.xlabel("Neutron energy (eV)")
-    plt.ylabel("Normalised current")
-    plt.savefig("resultsoutput.png")
+    Notes
+    -----
+    Exports a .png semilog figure of the surface current. 
+    """
+    particle_cap = particle.capitalize()
+    tally_name = f"{particle_cap} current at outer cylinder surface"
+    try:
+        surface_tally_results = results.get_tally(name=tally_name)
+        resultsdf = surface_tally_results.get_pandas_dataframe()
+        lowenergies = resultsdf["energy low [eV]"]
+        current = resultsdf["mean"]
+        plt.clf() # clears any existing plot
+        plt.semilogx(lowenergies, current)
+        plt.xlabel(f"{particle_cap} energy (eV)")
+        plt.ylabel("Normalised current")
+        plt.savefig(f"{particle}_surface_current.png")
+    except Exception as e:
+        print(f"No surface current tally for {particle}: {e}")
+
+
 
 def mesh_tally_to_vtk(particle="neutron"):
     """
@@ -48,3 +67,6 @@ def mesh_tally_to_vtk(particle="neutron"):
 
 mesh_tally_to_vtk("neutron")
 mesh_tally_to_vtk("photon")
+
+plot_surface_current("photon")
+plot_surface_current("neutron")

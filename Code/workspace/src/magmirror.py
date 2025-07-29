@@ -302,6 +302,8 @@ def surface_particle_current_tally(particle="neutron", name=None):
 tallies = openmc.Tallies()
 tallies.append(volumetric_flux_tally(particle="neutron")) # volumetric neutron flux tally
 tallies.append(volumetric_flux_tally(particle="photon"))  # volumetric photon flux tally
+tallies.append(surface_particle_current_tally(particle = "neutron"))  # surface neutron flux tally
+tallies.append(surface_particle_current_tally(particle = "photon"))   # surface photon flux tally
 
 settings = openmc.Settings()
 settings.photon_transport = True
