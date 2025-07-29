@@ -2,8 +2,9 @@ import openmc
 import math
 import numpy as np
 import os
-from openmc_plasma_source import TokamakSource
-from openmc_plasma_source.plotting import plot_tokamak_source_3D, scatter_tokamak_source
+from openmc_plasma_source import tokamak_source
+from openmc_source_plotter import plot_source_position, plot_source_energy
+# or create custom plotting functions using matplotlib directly
 import matplotlib.pyplot as plt
 import dagmc_h5m_file_inspector as di
 #Materials
@@ -107,38 +108,34 @@ geometry = openmc.Geometry(root=[containing_cell])
 #geometry.export_to_xml()
 
 
-#Plasma Source
-plasma_source = TokamakSource(
-    #elongation=1.557,
+# Plasma Source - Updated to use tokamak_source function
+plasma_sources = tokamak_source(
     elongation=1.84,
-    #ion_density_centre=1.09e20,
     ion_density_centre=1.8e20,
-    ion_density_peaking_factor=1,
     ion_density_pedestal=1.05e20,
+    ion_density_peaking_factor=1,
     ion_density_separatrix=1e20,
-    #ion_temperature_centre=45.9,
-    ion_temperature_centre=27,
+    ion_temperature_centre=27e3,  # Convert to eV (was 27 keV)
     ion_temperature_peaking_factor=8.06,
-    ion_temperature_pedestal=2.5,
-    ion_temperature_separatrix=0.5,
+    ion_temperature_pedestal=2.5e3,  # Convert to eV
+    ion_temperature_separatrix=0.5e3,  # Convert to eV
     major_radius=275,
     minor_radius=80,
     pedestal_radius=0.8 * 80,
-    mode="H", # 3 MODES: H, L, A. We use 'H' as suggested in [1]
-    #shafranov_factor=0.44789,
+    mode="H",
     shafranov_factor=0.44789,
     triangularity=0.270,
     ion_temperature_beta=6,
-    angles = (0, 0.5 * np.pi)
-    )
+    fuel={"D": 0.5, "T": 0.5}  # Add fuel specification
+)
 
-#Settings
+#Settings - updated to use the sources from tokamak_source function
 particle_count = 10000
 batches = 5
 settings = openmc.Settings()
 settings.dagmc = True
 settings.run_mode = 'fixed source'
-settings.source = plasma_source.sources
+settings.source = plasma_sources
 settings.batches = batches
 settings.inactive = 0
 settings.particles = particle_count
@@ -171,3 +168,20 @@ tallies.export_to_xml()
 
 model = openmc.model.Model(geometry, materials, settings, tallies)
 model.run()
+
+
+try:
+    from openmc_source_plotter import plot_source_position, plot_source_energy
+    
+    # Plot source positions
+    position_plot = plot_source_position(this=settings, n_samples=200)
+    position_plot.savefig('tokamak_source_positions.png')
+    print("Source position plot saved as 'tokamak_source_positions.png'")
+    
+    # Plot source energy distribution
+    energy_plot = plot_source_energy(this=settings, n_samples=1000)
+    energy_plot.savefig('tokamak_source_energy.png')
+    print("Source energy plot saved as 'tokamak_source_energy.png'")
+    
+except ImportError:
+    print("openmc_source_plotter not available for plotting")

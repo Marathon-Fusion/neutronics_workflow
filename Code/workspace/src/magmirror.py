@@ -185,6 +185,8 @@ for i, (name, radius) in enumerate(radial_layers):
 print(f"\nTotal radius: {radial_layers[-1][1]:.1f} cm")
 print(f"Cylinder length: {cylinder_length:.1f} cm")
 
+
+######################### Neutron Source ############################
 n_source = openmc.IndependentSource()
 
 #line source along z axis
@@ -195,56 +197,115 @@ n_source.angle = openmc.stats.Isotropic()
 n_source.energy = openmc.stats.Discrete([14.1e6], [1.0]) #14.1MeV neutrons only
 #sourceplot = plot_source_position(n_source)
 #sourceplot.write_html("./n_source_plotted.html")
+######################################################################
 
-def volumetric_neutron_flux_tally():
-    "Returns an openmc.Tally object for neutron flux through each element of a mesh"
+##################### Photon Source ############################
+# literally the same thing as the neutron source, just replaced with photons
+photon_source = openmc.IndependentSource()
+photon_source.space = openmc.stats.CartesianIndependent(
+    openmc.stats.Discrete([0.0], [1.0]),
+    openmc.stats.Discrete([0.0], [1.0]),
+    openmc.stats.Uniform(-cylinder_length/2, cylinder_length/2)
+)
+photon_source.angle = openmc.stats.Isotropic()
+photon_source.energy = openmc.stats.Discrete([1.0e6], [1.0])  # 1MeV photons
+photon_source.particle = 'photon'
+#####################################################################
 
-    #set up mesh for flux visualisation
-    rgrid = np.arange(0, outer_rad, 0.25)
-    zgrid = np.arange(-cylinder_length/2, cylinder_length/2, 0.25)
-    phigrid = np.arange(0, 2*np.pi, 1*np.pi/180) #1 degree steps
+
+########################### neutron tallies #######################################
+def volumetric_flux_tally(particle="neutron", name=None):
+    """
+    Returns an openmc.Tally object for flux through each element of a mesh
+    for a specified particle type ('neutron' or 'photon').
+
+    Parameters:
+    -----------
+    particle : str
+        The type of particle to tally ('neutron' or 'photon').
+    name : str (optional)
+        Name to give the tally. Defaults to '{Particle} flux in mesh'.
+
+    Returns:
+    --------
+    openmc.Tally
+        Configured OpenMC mesh tally for the requested particle.
+    """
+    N = 10 # number of angular mesh components
+    rgrid = np.arange(0, outer_rad, 1)
+    zgrid = np.arange(-cylinder_length/2, cylinder_length/2, 1)
+    phigrid = np.linspace(0, 2*np.pi, num=N+1)
 
     mesh = openmc.CylindricalMesh(rgrid, zgrid, phigrid)
     mesh_filter = openmc.MeshFilter(mesh)
+    p_filter = openmc.ParticleFilter([particle])
 
-    n_filter = openmc.ParticleFilter(['neutron'])
+    if name is None:
+        name = f"{particle.capitalize()} flux in mesh"
 
-    mesh_tally = openmc.Tally(name="Neutron flux in mesh")
-    mesh_tally.filters = [mesh_filter, n_filter]
-    mesh_tally.scores=['flux']
+    mesh_tally = openmc.Tally(name=name)
+    mesh_tally.filters = [mesh_filter, p_filter]
+    mesh_tally.scores = ['flux']
 
     return mesh_tally
 
-def surface_neutron_current_tally():
-    """Returns an openmc.Tally object for neutron current across the outer cylindrical surface with energy bins"""
 
-    #filter around outer surface
-    surface_filter = openmc.SurfaceFilter(bins=[cylinders[-1]])
-    surface_filter.direction = 'both'
+def surface_particle_current_tally(particle="neutron", name=None):
+    """
+    Create an OpenMC Tally to measure particle current at the outer cylindrical surface
+    across a range of energies.
 
-    #filter for neutrons
-    n_filter = openmc.ParticleFilter(['neutron'])
+    Parameters
+    ----------
+    particle : str, optional
+        Particle type to tally ('neutron', 'photon', etc.). Default is 'neutron'.
+    name : str, optional
+        Optional name for the tally. If not provided, a descriptive default is used.
 
-    #filter for energies between 0.01eV (less than thermal) and 14.1MeV
+    Returns
+    -------
+    openmc.Tally
+        Configured tally object for outer surface current as a function of energy.
+
+    Notes
+    -----
+    - The surface filter targets the outermost cylinder, corresponding to the
+      vacuum boundary of the model geometry.
+    - The energy filter divides the spectrum into 100 logarithmic bins from
+      0.01eV up to 14.1MeV, suitable for both neutron and photon tallies.
+    - The tally reports current of the specified particle type crossing
+      the surface in both directions.
+    """
+    
+    surface_filter = openmc.SurfaceFilter(bins=[cylinders[-1]]) # Filter for the vacuum boundary at the outermost radius
+    surface_filter.direction = 'both'  # could parameterize if you wish.
+
+    # ParticleFilter for requested type (e.g., neutron or photon)
+    p_filter = openmc.ParticleFilter([particle])
+
+    # Energy filter: 100 logarithmic bins from 0.01eV up to 14.1MeV. Adjust as needed.
     e_filter = openmc.EnergyFilter(values=np.logspace(-2, 7.15, 100))
+   
+    if name is None:  # Use a descriptive default tally name if none is given
+        name = f"{particle.capitalize()} current at outer cylinder surface"
 
-    surface_tally = openmc.Tally(name="Neutron current at outer cylinder surface")
-    surface_tally.filters = [surface_filter, n_filter, e_filter]
+    # Create and configure the tally object
+    surface_tally = openmc.Tally(name=name)
+    surface_tally.filters = [surface_filter, p_filter, e_filter]
     surface_tally.scores = ['current']
-
-    # flux_tally = openmc.Tally(name="Flux in last shielding cell")
-    # flux_tally.filters = [openmc.CellFilter(cells[-1]), n_filter]
-    # flux_tally.scores = ['flux']
 
     return surface_tally
 
+##########################################################################################
+
+
 tallies = openmc.Tallies()
-#tallies.append(surface_neutron_current_tally())
-tallies.append(volumetric_neutron_flux_tally())
-#tallies.append(flux_tally)
+tallies.append(volumetric_flux_tally(particle="neutron")) # volumetric neutron flux tally
+tallies.append(volumetric_flux_tally(particle="photon"))  # volumetric photon flux tally
 
 settings = openmc.Settings()
-settings.source = n_source
+settings.photon_transport = True
+settings.source = [n_source, photon_source]
 settings.batches = 10
 settings.particles = 1000
 settings.run_mode = 'fixed source'

@@ -18,13 +18,33 @@ def plot_surface_current():
     plt.ylabel("Normalised current")
     plt.savefig("resultsoutput.png")
 
-def mesh_tally_to_vtk():
-    mesh_tally_results = results.get_tally(name="Neutron flux in mesh")
+def mesh_tally_to_vtk(particle="neutron"):
+    """
+    Export a mesh flux tally to VTK for the specified particle type.
 
-    mesh = mesh_tally_results.find_filter(openmc.MeshFilter).mesh
-    #print(mesh)
-    flux = mesh_tally_results.get_values(scores=['flux'], value='mean')
+    Parameters
+    ----------
+    particle : str, optional
+        The type of particle mesh tally to export ('neutron' or 'photon').
+        Default is 'neutron'.
 
-    mesh.write_data_to_vtk(filename="neutron_flux.vtk", datasets={"mean": flux})
+    Notes
+    -----
+    Exports a VTK file named 'neutron_flux.vtk' or 'photon_flux.vtk'.
+    """
+    # Capitalize first letter for tally name
+    particle_cap = particle.capitalize()
+    tally_name = f"{particle_cap} flux in mesh"
+    try:
+        mesh_tally_results = results.get_tally(name=tally_name)
+        mesh = mesh_tally_results.find_filter(openmc.MeshFilter).mesh
+        flux = mesh_tally_results.get_values(scores=['flux'], value='mean')
+        vtk_filename = f"{particle}_flux.vtk"
+        mesh.write_data_to_vtk(filename=vtk_filename, datasets={"mean": flux})
+        print(f"Exported {particle} flux to {vtk_filename}")
+    except Exception as e:
+        print(f"No {particle} mesh flux tally found or export failed: {e}")
 
-mesh_tally_to_vtk()
+
+mesh_tally_to_vtk("neutron")
+mesh_tally_to_vtk("photon")

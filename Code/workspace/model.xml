@@ -1,0 +1,188 @@
+<?xml version='1.0' encoding='utf-8'?>
+<model>
+  <materials>
+    <material id="1" name="tungsten">
+      <density units="g/cm3" value="19"/>
+      <nuclide ao="0.0012" name="W180"/>
+      <nuclide ao="0.265" name="W182"/>
+      <nuclide ao="0.1431" name="W183"/>
+      <nuclide ao="0.3064" name="W184"/>
+      <nuclide ao="0.2843" name="W186"/>
+    </material>
+    <material id="2" name="vanadium_alloy">
+      <density units="g/cm3" value="6.05"/>
+      <nuclide name="V50" wo="0.0022551070895674248"/>
+      <nuclide name="V51" wo="0.9177448929104326"/>
+      <nuclide name="Cr50" wo="0.0016694746490873253"/>
+      <nuclide name="Cr52" wo="0.03347974494053836"/>
+      <nuclide name="Cr53" wo="0.0038694347274700735"/>
+      <nuclide name="Cr54" wo="0.0009813456829042457"/>
+      <nuclide name="Ti46" wo="0.0031680380863104225"/>
+      <nuclide name="Ti47" wo="0.002919112929278088"/>
+      <nuclide name="Ti48" wo="0.029538020902329386"/>
+      <nuclide name="Ti49" wo="0.0022128762152676786"/>
+      <nuclide name="Ti50" wo="0.0021619518668144254"/>
+    </material>
+    <material id="3" name="channel_mat">
+      <density units="g/cm3" value="11.642499999999998"/>
+      <nuclide ao="0.765" name="Hg198"/>
+      <nuclide ao="0.00014161946017994003" name="Hg196"/>
+      <nuclide ao="0.015927468621570587" name="Hg199"/>
+      <nuclide ao="0.021809396867710763" name="Hg200"/>
+      <nuclide ao="0.012443629901144062" name="Hg201"/>
+      <nuclide ao="0.028191713873153387" name="Hg202"/>
+      <nuclide ao="0.006486171276241253" name="Hg204"/>
+      <nuclide ao="0.135" name="Li6"/>
+      <nuclide ao="0.015" name="Li7"/>
+    </material>
+    <material id="4" name="blanket_mat" temperature="900.0">
+      <density units="g/cm3" value="1.94"/>
+      <nuclide ao="4.0" name="F19"/>
+      <nuclide ao="1.0" name="Be9"/>
+      <nuclide ao="1.8" name="Li6"/>
+      <nuclide ao="0.2" name="Li7"/>
+    </material>
+    <material id="5" name="blanketouter" temperature="900.0">
+      <density units="g/cm3" value="7.75"/>
+      <nuclide name="Cr50" wo="0.0037271021540874537"/>
+      <nuclide name="Cr52" wo="0.07474353057975189"/>
+      <nuclide name="Cr53" wo="0.00863851302907694"/>
+      <nuclide name="Cr54" wo="0.0021908542370837284"/>
+      <nuclide name="C0" wo="0.0012"/>
+      <nuclide name="Mn55" wo="0.0047"/>
+      <nuclide name="V50" wo="4.902406716450924e-06"/>
+      <nuclide name="V51" wo="0.001995097593283549"/>
+      <nuclide name="W180" wo="1.256795818590312e-05"/>
+      <nuclide name="W182" wo="0.0028062942939627434"/>
+      <nuclide name="W183" wo="0.0015237444705438205"/>
+      <nuclide name="W184" wo="0.0032804265533499916"/>
+      <nuclide name="W186" wo="0.003076966723957541"/>
+      <nuclide name="Ta181" wo="0.001399832789599558"/>
+      <nuclide name="Ta180" wo="1.6721040044200304e-07"/>
+      <nuclide name="Ti46" wo="7.12808569419845e-07"/>
+      <nuclide name="Ti47" wo="6.568004090875698e-07"/>
+      <nuclide name="Ti48" wo="6.646054703024112e-06"/>
+      <nuclide name="Ti49" wo="4.978971484352277e-07"/>
+      <nuclide name="Ti50" wo="4.864391700332457e-07"/>
+      <nuclide name="N14" wo="0.00017929389839567322"/>
+      <nuclide name="N15" wo="7.061016043267817e-07"/>
+      <nuclide name="P31" wo="5e-06"/>
+      <nuclide name="S32" wo="3.790744432331034e-06"/>
+      <nuclide name="S33" wo="3.079527751016141e-08"/>
+      <nuclide name="S34" wo="1.778060960350409e-07"/>
+      <nuclide name="S36" wo="6.541941237634813e-10"/>
+      <nuclide name="B10" wo="1.8355495875073257e-07"/>
+      <nuclide name="B11" wo="8.164450412492672e-07"/>
+      <nuclide name="Si28" wo="5.5124110369702055e-05"/>
+      <nuclide name="Si29" wo="2.8990501756718374e-06"/>
+      <nuclide name="Si30" wo="1.976839454626105e-06"/>
+      <nuclide name="Nb93" wo="2e-06"/>
+      <nuclide name="Mo92" wo="2.1047837070591822e-06"/>
+      <nuclide name="Mo94" wo="1.3486977570945042e-06"/>
+      <nuclide name="Mo95" wo="2.3550696583545726e-06"/>
+      <nuclide name="Mo96" wo="2.49980045270409e-06"/>
+      <nuclide name="Mo97" wo="1.4516393261295655e-06"/>
+      <nuclide name="Mo98" wo="3.71810585345211e-06"/>
+      <nuclide name="Mo100" wo="1.521903245205976e-06"/>
+      <nuclide name="Ni58" wo="1.3439541059317979e-06"/>
+      <nuclide name="Ni60" wo="5.355192579845912e-07"/>
+      <nuclide name="Ni61" wo="2.36671817059342e-08"/>
+      <nuclide name="Ni62" wo="7.669644606974339e-08"/>
+      <nuclide name="Ni64" wo="2.0163008307933398e-08"/>
+      <nuclide name="Cu63" wo="2.05437585615717e-06"/>
+      <nuclide name="Cu65" wo="9.4562414384283e-07"/>
+      <nuclide name="Fe54" wo="0.050269123071044156"/>
+      <nuclide name="Fe56" wo="0.8183086735436922"/>
+      <nuclide name="Fe57" wo="0.01923633260619556"/>
+      <nuclide name="Fe58" wo="0.0026048707790681186"/>
+    </material>
+  </materials>
+  <geometry>
+    <cell id="1" material="void" name="source + gap" region="-3 1 -2" universe="1"/>
+    <cell id="2" material="1" name="first wall" region="3 -4 1 -2" universe="1"/>
+    <cell id="3" material="2" name="structural1" region="4 -5 1 -2" universe="1"/>
+    <cell id="4" material="3" name="channel" region="5 -6 1 -2" universe="1"/>
+    <cell id="5" material="2" name="structural2" region="6 -7 1 -2" universe="1"/>
+    <cell id="6" material="4" name="blanket" region="7 -8 1 -2" universe="1"/>
+    <cell id="7" material="5" name="blanketouter" region="8 -9 1 -2" universe="1"/>
+    <surface boundary="reflective" coeffs="-50.0" id="1" type="z-plane"/>
+    <surface boundary="reflective" coeffs="50.0" id="2" type="z-plane"/>
+    <surface coeffs="0.0 0.0 126" id="3" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 126.5" id="4" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 127.5" id="5" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 148.5" id="6" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 151.5" id="7" type="z-cylinder"/>
+    <surface coeffs="0.0 0.0 201.5" id="8" type="z-cylinder"/>
+    <surface boundary="vacuum" coeffs="0.0 0.0 204.5" id="9" type="z-cylinder"/>
+  </geometry>
+  <settings>
+    <run_mode>fixed source</run_mode>
+    <particles>1000</particles>
+    <batches>10</batches>
+    <source particle="neutron" strength="1.0" type="independent">
+      <space type="cartesian">
+        <x type="discrete">
+          <parameters>0.0 1.0</parameters>
+        </x>
+        <y type="discrete">
+          <parameters>0.0 1.0</parameters>
+        </y>
+        <z parameters="-50.0 50.0" type="uniform"/>
+      </space>
+      <angle type="isotropic"/>
+      <energy type="discrete">
+        <parameters>14100000.0 1.0</parameters>
+      </energy>
+    </source>
+    <source particle="photon" strength="1.0" type="independent">
+      <space type="cartesian">
+        <x type="discrete">
+          <parameters>0.0 1.0</parameters>
+        </x>
+        <y type="discrete">
+          <parameters>0.0 1.0</parameters>
+        </y>
+        <z parameters="-50.0 50.0" type="uniform"/>
+      </space>
+      <angle type="isotropic"/>
+      <energy type="discrete">
+        <parameters>1000000.0 1.0</parameters>
+      </energy>
+    </source>
+    <photon_transport>true</photon_transport>
+  </settings>
+  <tallies>
+    <mesh id="1" type="cylindrical">
+      <r_grid>0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0 18.0 19.0 20.0 21.0 22.0 23.0 24.0 25.0 26.0 27.0 28.0 29.0 30.0 31.0 32.0 33.0 34.0 35.0 36.0 37.0 38.0 39.0 40.0 41.0 42.0 43.0 44.0 45.0 46.0 47.0 48.0 49.0 50.0 51.0 52.0 53.0 54.0 55.0 56.0 57.0 58.0 59.0 60.0 61.0 62.0 63.0 64.0 65.0 66.0 67.0 68.0 69.0 70.0 71.0 72.0 73.0 74.0 75.0 76.0 77.0 78.0 79.0 80.0 81.0 82.0 83.0 84.0 85.0 86.0 87.0 88.0 89.0 90.0 91.0 92.0 93.0 94.0 95.0 96.0 97.0 98.0 99.0 100.0 101.0 102.0 103.0 104.0 105.0 106.0 107.0 108.0 109.0 110.0 111.0 112.0 113.0 114.0 115.0 116.0 117.0 118.0 119.0 120.0 121.0 122.0 123.0 124.0 125.0 126.0 127.0 128.0 129.0 130.0 131.0 132.0 133.0 134.0 135.0 136.0 137.0 138.0 139.0 140.0 141.0 142.0 143.0 144.0 145.0 146.0 147.0 148.0 149.0 150.0 151.0 152.0 153.0 154.0 155.0 156.0 157.0 158.0 159.0 160.0 161.0 162.0 163.0 164.0 165.0 166.0 167.0 168.0 169.0 170.0 171.0 172.0 173.0 174.0 175.0 176.0 177.0 178.0 179.0 180.0 181.0 182.0 183.0 184.0 185.0 186.0 187.0 188.0 189.0 190.0 191.0 192.0 193.0 194.0 195.0 196.0 197.0 198.0 199.0 200.0 201.0 202.0 203.0 204.0</r_grid>
+      <phi_grid>0.0 0.6283185307179586 1.2566370614359172 1.8849555921538759 2.5132741228718345 3.141592653589793 3.7699111843077517 4.39822971502571 5.026548245743669 5.654866776461628 6.283185307179586</phi_grid>
+      <z_grid>-50.0 -49.0 -48.0 -47.0 -46.0 -45.0 -44.0 -43.0 -42.0 -41.0 -40.0 -39.0 -38.0 -37.0 -36.0 -35.0 -34.0 -33.0 -32.0 -31.0 -30.0 -29.0 -28.0 -27.0 -26.0 -25.0 -24.0 -23.0 -22.0 -21.0 -20.0 -19.0 -18.0 -17.0 -16.0 -15.0 -14.0 -13.0 -12.0 -11.0 -10.0 -9.0 -8.0 -7.0 -6.0 -5.0 -4.0 -3.0 -2.0 -1.0 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0 18.0 19.0 20.0 21.0 22.0 23.0 24.0 25.0 26.0 27.0 28.0 29.0 30.0 31.0 32.0 33.0 34.0 35.0 36.0 37.0 38.0 39.0 40.0 41.0 42.0 43.0 44.0 45.0 46.0 47.0 48.0 49.0</z_grid>
+      <origin>0.0 0.0 0.0</origin>
+    </mesh>
+    <mesh id="2" type="cylindrical">
+      <r_grid>0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0 18.0 19.0 20.0 21.0 22.0 23.0 24.0 25.0 26.0 27.0 28.0 29.0 30.0 31.0 32.0 33.0 34.0 35.0 36.0 37.0 38.0 39.0 40.0 41.0 42.0 43.0 44.0 45.0 46.0 47.0 48.0 49.0 50.0 51.0 52.0 53.0 54.0 55.0 56.0 57.0 58.0 59.0 60.0 61.0 62.0 63.0 64.0 65.0 66.0 67.0 68.0 69.0 70.0 71.0 72.0 73.0 74.0 75.0 76.0 77.0 78.0 79.0 80.0 81.0 82.0 83.0 84.0 85.0 86.0 87.0 88.0 89.0 90.0 91.0 92.0 93.0 94.0 95.0 96.0 97.0 98.0 99.0 100.0 101.0 102.0 103.0 104.0 105.0 106.0 107.0 108.0 109.0 110.0 111.0 112.0 113.0 114.0 115.0 116.0 117.0 118.0 119.0 120.0 121.0 122.0 123.0 124.0 125.0 126.0 127.0 128.0 129.0 130.0 131.0 132.0 133.0 134.0 135.0 136.0 137.0 138.0 139.0 140.0 141.0 142.0 143.0 144.0 145.0 146.0 147.0 148.0 149.0 150.0 151.0 152.0 153.0 154.0 155.0 156.0 157.0 158.0 159.0 160.0 161.0 162.0 163.0 164.0 165.0 166.0 167.0 168.0 169.0 170.0 171.0 172.0 173.0 174.0 175.0 176.0 177.0 178.0 179.0 180.0 181.0 182.0 183.0 184.0 185.0 186.0 187.0 188.0 189.0 190.0 191.0 192.0 193.0 194.0 195.0 196.0 197.0 198.0 199.0 200.0 201.0 202.0 203.0 204.0</r_grid>
+      <phi_grid>0.0 0.6283185307179586 1.2566370614359172 1.8849555921538759 2.5132741228718345 3.141592653589793 3.7699111843077517 4.39822971502571 5.026548245743669 5.654866776461628 6.283185307179586</phi_grid>
+      <z_grid>-50.0 -49.0 -48.0 -47.0 -46.0 -45.0 -44.0 -43.0 -42.0 -41.0 -40.0 -39.0 -38.0 -37.0 -36.0 -35.0 -34.0 -33.0 -32.0 -31.0 -30.0 -29.0 -28.0 -27.0 -26.0 -25.0 -24.0 -23.0 -22.0 -21.0 -20.0 -19.0 -18.0 -17.0 -16.0 -15.0 -14.0 -13.0 -12.0 -11.0 -10.0 -9.0 -8.0 -7.0 -6.0 -5.0 -4.0 -3.0 -2.0 -1.0 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0 18.0 19.0 20.0 21.0 22.0 23.0 24.0 25.0 26.0 27.0 28.0 29.0 30.0 31.0 32.0 33.0 34.0 35.0 36.0 37.0 38.0 39.0 40.0 41.0 42.0 43.0 44.0 45.0 46.0 47.0 48.0 49.0</z_grid>
+      <origin>0.0 0.0 0.0</origin>
+    </mesh>
+    <filter id="1" type="mesh">
+      <bins>1</bins>
+    </filter>
+    <filter id="2" type="particle">
+      <bins>neutron</bins>
+    </filter>
+    <filter id="3" type="mesh">
+      <bins>2</bins>
+    </filter>
+    <filter id="4" type="particle">
+      <bins>photon</bins>
+    </filter>
+    <tally id="1" name="Neutron flux in mesh">
+      <filters>1 2</filters>
+      <scores>flux</scores>
+    </tally>
+    <tally id="2" name="Photon flux in mesh">
+      <filters>3 4</filters>
+      <scores>flux</scores>
+    </tally>
+  </tallies>
+</model>

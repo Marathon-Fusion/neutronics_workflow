@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<tallies>
+  <mesh id="1" library="moab" type="unstructured">
+    <filename>/opt/marathon/workspace/firstwall.exo</filename>
+  </mesh>
+  <mesh id="2" library="moab" type="unstructured">
+    <filename>/opt/marathon/workspace/structural1.exo</filename>
+  </mesh>
+  <mesh id="3" library="moab" type="unstructured">
+    <filename>/opt/marathon/workspace/internalspace.exo</filename>
+  </mesh>
+  <mesh id="4" library="moab" type="unstructured">
+    <filename>/opt/marathon/workspace/structural2.exo</filename>
+  </mesh>
+  <mesh id="5" library="moab" type="unstructured">
+    <filename>/opt/marathon/workspace/blankettank.exo</filename>
+  </mesh>
+  <mesh id="6" library="moab" type="unstructured">
+    <filename>/opt/marathon/workspace/blanketouter.exo</filename>
+  </mesh>
+  <filter id="1" type="mesh">
+    <bins>1</bins>
+  </filter>
+  <filter id="2" type="mesh">
+    <bins>2</bins>
+  </filter>
+  <filter id="3" type="mesh">
+    <bins>3</bins>
+  </filter>
+  <filter id="4" type="mesh">
+    <bins>4</bins>
+  </filter>
+  <filter id="5" type="mesh">
+    <bins>5</bins>
+  </filter>
+  <filter id="6" type="mesh">
+    <bins>6</bins>
+  </filter>
+  <tally id="1" name="firstwall_DPA">
+    <filters>1</filters>
+    <scores>damage-energy flux</scores>
+  </tally>
+  <tally id="2" name="structural1_DPA">
+    <filters>2</filters>
+    <scores>damage-energy flux</scores>
+  </tally>
+  <tally id="3" name="internalspace_DPA">
+    <filters>3</filters>
+    <scores>damage-energy flux</scores>
+  </tally>
+  <tally id="4" name="structural2_DPA">
+    <filters>4</filters>
+    <scores>damage-energy flux</scores>
+  </tally>
+  <tally id="5" name="blankettank_DPA">
+    <filters>5</filters>
+    <scores>damage-energy flux</scores>
+  </tally>
+  <tally id="6" name="blanketouter_DPA">
+    <filters>6</filters>
+    <scores>damage-energy flux</scores>
+  </tally>
+</tallies>
