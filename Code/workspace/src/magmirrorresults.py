@@ -2,8 +2,14 @@ import openmc
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
-results = openmc.StatePoint("statepoint.10.h5")
+# Set results directory to workspace/results
+results_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results'))
+os.makedirs(results_dir, exist_ok=True)
+
+statepoint_path = os.path.join(results_dir, "statepoint.10.h5")
+results = openmc.StatePoint(statepoint_path)
 
 
 def plot_surface_current(particle="neutron", normalise = True):
@@ -43,7 +49,7 @@ def plot_surface_current(particle="neutron", normalise = True):
         plt.xlabel(f"{particle_cap} energy (eV)", fontsize = 14)
         plt.ylabel("Normalised current", fontsize = 14)
         plt.tight_layout()
-        plt.savefig(f"{particle}_surface_current.png")
+        plt.savefig(os.path.join(results_dir, f"{particle}_surface_current.png"))
     except Exception as e:
         print(f"No surface current tally for {particle}: {e}")
 
@@ -78,7 +84,7 @@ def mesh_tally_to_vtk(particle="neutron", normalise = True):
             with open('n_per_year_per_slice.txt', 'r') as input:
                 n_per_year_per_slice = input.read()
             flux = mesh_tally_results.get_values(scores=['flux'], value='mean')*n_per_year_per_slice
-        vtk_filename = f"{particle}_flux.vtk"
+        vtk_filename = os.path.join(results_dir, f"{particle}_flux.vtk")
         mesh.write_data_to_vtk(filename=vtk_filename, datasets={"mean": flux})
         print(f"Exported {particle} flux to {vtk_filename}")
     except Exception as e:
