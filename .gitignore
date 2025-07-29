@@ -1,0 +1,5 @@
+Code/venv/
+Code/openmc_clone
+Code/workspace/results/
+__pycache__/
+*.pyc
