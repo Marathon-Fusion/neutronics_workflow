@@ -284,7 +284,7 @@ def surface_particle_current_tally(particle="neutron", name=None):
     p_filter = openmc.ParticleFilter([particle])
 
     # Energy filter: 100 logarithmic bins from 0.01eV up to 14.1MeV. Adjust as needed.
-    e_filter = openmc.EnergyFilter(values=np.logspace(-2, 7.15, 100))
+    e_filter = openmc.EnergyFilter(values=np.logspace(-2, 8, 100))
    
     if name is None:  # Use a descriptive default tally name if none is given
         name = f"{particle.capitalize()} current at outer cylinder surface"
@@ -309,7 +309,7 @@ settings = openmc.Settings()
 settings.photon_transport = True
 settings.source = [n_source, photon_source]
 settings.batches = 10
-settings.particles = 1000
+settings.particles = 10000
 settings.run_mode = 'fixed source'
 
 model = openmc.Model(geometry=geometry, settings=settings, tallies=tallies)

@@ -29,8 +29,10 @@ def plot_surface_current(particle="neutron"):
         current = resultsdf["mean"]
         plt.clf() # clears any existing plot
         plt.semilogx(lowenergies, current)
-        plt.xlabel(f"{particle_cap} energy (eV)")
-        plt.ylabel("Normalised current")
+        plt.title(f"{particle_cap} Surface Current", fontsize = 16)
+        plt.xlabel(f"{particle_cap} energy (eV)", fontsize = 14)
+        plt.ylabel("Normalised current", fontsize = 14)
+        plt.tight_layout()
         plt.savefig(f"{particle}_surface_current.png")
     except Exception as e:
         print(f"No surface current tally for {particle}: {e}")
