@@ -5,23 +5,46 @@ import matplotlib.pyplot as plt
 
 results = openmc.StatePoint("statepoint.10.h5")
 
-def plot_surface_current(normalise = True):
-    surface_tally_results = results.get_tally(name="Neutron current at outer cylinder surface")
-    resultsdf = surface_tally_results.get_pandas_dataframe()
-    #flux_tally_results = results.get_tally("Flux in last shielding cell")
 
-    lowenergies = resultsdf["energy low [eV]"]
-    if normalise == True:
-        current = resultsdf["mean"]
-    else:
-        with open('n_per_year_per_slice.txt', 'r') as input:
-            n_per_year_per_slice = input.read()
-        current = resultsdf["mean"]*n_per_year_per_slice
+def plot_surface_current(particle="neutron", normalise = True):
+    """
+    Plot the surface current as a function of energy for the specified particle type.
+    
+    Parameters
+    ---------
+    particle : str, optional
+        The type of particle mesh tally to export ('neutron' or 'photon').
+        Default is 'neutron'.
 
-    plt.semilogx(lowenergies, current)
-    plt.xlabel("Neutron energy (eV)")
-    plt.ylabel("Normalised current")
-    plt.savefig("resultsoutput.png")
+    Notes
+    -----
+    Exports a .png semilog figure of the surface current. 
+    """
+    particle_cap = particle.capitalize()
+    tally_name = f"{particle_cap} current at outer cylinder surface"
+    try:
+        surface_tally_results = results.get_tally(name=tally_name)
+        resultsdf = surface_tally_results.get_pandas_dataframe()
+        lowenergies = resultsdf["energy low [eV]"]
+        if normalise == True:
+            current = resultsdf["mean"]
+        else:
+            with open('n_per_year_per_slice.txt', 'r') as input:
+                n_per_year_per_slice = input.read()
+            current = resultsdf["mean"]*n_per_year_per_slice
+
+        plt.clf() # clears any existing plot
+
+        plt.semilogx(lowenergies, current)
+        plt.title(f"{particle_cap} Surface Current", fontsize = 16)
+        plt.xlabel(f"{particle_cap} energy (eV)", fontsize = 14)
+        plt.ylabel("Normalised current", fontsize = 14)
+        plt.tight_layout()
+        plt.savefig(f"{particle}_surface_current.png")
+    except Exception as e:
+        print(f"No surface current tally for {particle}: {e}")
+
+
 
 def mesh_tally_to_vtk(particle="neutron", normalise = True):
     """

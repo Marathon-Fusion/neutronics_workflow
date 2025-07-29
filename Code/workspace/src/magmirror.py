@@ -303,7 +303,7 @@ def surface_particle_current_tally(particle="neutron", name=None):
     p_filter = openmc.ParticleFilter([particle])
 
     # Energy filter: 100 logarithmic bins from 0.01eV up to 14.1MeV. Adjust as needed.
-    e_filter = openmc.EnergyFilter(values=np.logspace(-2, 7.15, 100))
+    e_filter = openmc.EnergyFilter(values=np.logspace(-2, 8, 100))
    
     if name is None:  # Use a descriptive default tally name if none is given
         name = f"{particle.capitalize()} current at outer cylinder surface"
@@ -321,6 +321,8 @@ def surface_particle_current_tally(particle="neutron", name=None):
 tallies = openmc.Tallies()
 tallies.append(volumetric_flux_tally(particle="neutron")) # volumetric neutron flux tally
 tallies.append(volumetric_flux_tally(particle="photon"))  # volumetric photon flux tally
+tallies.append(surface_particle_current_tally(particle = "neutron"))  # surface neutron flux tally
+tallies.append(surface_particle_current_tally(particle = "photon"))   # surface photon flux tally
 
 settings = openmc.Settings()
 settings.photon_transport = True
