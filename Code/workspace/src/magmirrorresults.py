@@ -15,6 +15,10 @@ def plot_surface_current(particle="neutron", normalise = True):
     particle : str, optional
         The type of particle mesh tally to export ('neutron' or 'photon').
         Default is 'neutron'.
+    normalise : bool, optional
+        Determines whether or not to normalise results per neutron.
+        Default is True.
+        If False, multiplies result by the number of neutrons produced in the slice per year (calculated in magmirror).
 
     Notes
     -----
@@ -32,9 +36,8 @@ def plot_surface_current(particle="neutron", normalise = True):
             with open('n_per_year_per_slice.txt', 'r') as input:
                 n_per_year_per_slice = input.read()
             current = resultsdf["mean"]*n_per_year_per_slice
-
+        
         plt.clf() # clears any existing plot
-
         plt.semilogx(lowenergies, current)
         plt.title(f"{particle_cap} Surface Current", fontsize = 16)
         plt.xlabel(f"{particle_cap} energy (eV)", fontsize = 14)
@@ -84,3 +87,6 @@ def mesh_tally_to_vtk(particle="neutron", normalise = True):
 
 mesh_tally_to_vtk("neutron")
 mesh_tally_to_vtk("photon")
+
+plot_surface_current("photon")
+plot_surface_current("neutron")
