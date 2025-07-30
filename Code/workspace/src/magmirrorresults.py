@@ -58,6 +58,36 @@ def plot_surface_current(particle="neutron", normalise = True):
     except Exception as e:
         print(f"No surface current tally for {particle}: {e}")
 
+def sum_surface_current(particle='neutron', normalise = True):
+    """
+    Prints the total number of particles passing through the outer surface.
+    
+    Parameters
+    ---------
+    particle : str, optional
+        The type of particle mesh tally to export ('neutron' or 'photon').
+        Default is 'neutron'.
+    normalise : bool, optional
+        Determines whether or not to normalise results per neutron.
+        Default is True.
+        If False, multiplies result by the number of neutrons produced in the slice per year (calculated in magmirror).
+    """
+    particle_cap = particle.capitalize()
+    tally_name = f"{particle_cap} current at outer cylinder surface"
+    try:
+        surface_tally_results = results.get_tally(name=tally_name)
+        resultsdf = surface_tally_results.get_pandas_dataframe()
+        particle_sum = sum(resultsdf['mean'])
+        if normalise == True:
+            print(f"{particle_cap} leakage rate: {particle_sum}")
+        else:
+            with open(os.path.join(results_dir, 'n_per_year_per_slice.txt'), 'r') as input:
+                n_per_year_per_slice = input.read()
+            particle_sum *= float(n_per_year_per_slice)
+            print(f"{particle_cap} total leakage: {particle_sum}")
+    except Exception as e:
+        print(f"{e}")
+
 
 
 def mesh_tally_to_vtk(particle="neutron", normalise = True):
@@ -100,4 +130,7 @@ mesh_tally_to_vtk("neutron")
 mesh_tally_to_vtk("photon")
 
 plot_surface_current("photon")
-plot_surface_current("neutron", normalise=False)
+plot_surface_current("neutron")
+
+sum_surface_current("photon")
+sum_surface_current("neutron")

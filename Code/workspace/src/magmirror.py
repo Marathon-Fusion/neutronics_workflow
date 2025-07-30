@@ -337,7 +337,7 @@ settings = openmc.Settings()
 settings.photon_transport = True
 settings.source = [n_source]#, photon_source]
 settings.batches = 10
-settings.particles = 10000
+settings.particles = 1000000
 settings.run_mode = 'fixed source'
 settings.output = {'path': results_dir}  # all output files now go to results_dir
 
