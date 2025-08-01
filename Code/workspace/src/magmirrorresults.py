@@ -39,16 +39,16 @@ def plot_surface_current(particle="neutron", normalise = True):
         if normalise == True:
             current = resultsdf["mean"]
         else:
-            with open(os.path.join(results_dir, 'n_per_year_per_slice.txt'), 'r') as input:
-                n_per_year_per_slice = input.read()
-            current = resultsdf["mean"]*float(n_per_year_per_slice)
+            with open(os.path.join(results_dir, 'n_fluence_per_year.txt'), 'r') as input:
+                n_fluence_per_year = input.read()
+            current = resultsdf["mean"]*float(n_fluence_per_year)
         
         plt.clf() # clears any existing plot
         plt.semilogx(lowenergies, current)
         if normalise == True:
             normal_str = "normalised per source neutron"
         else:
-            normal_str = "per year in given reaction slice"
+            normal_str = "per cm^2 per year"
         plt.title(f"{particle_cap} Surface Current, {normal_str}", fontsize = 16)
         plt.xlabel(f"{particle_cap} energy (eV)", fontsize = 14)
         plt.ylabel("Current", fontsize = 14)
@@ -81,10 +81,10 @@ def sum_surface_current(particle='neutron', normalise = True):
         if normalise == True:
             print(f"{particle_cap} leakage rate: {particle_sum}")
         else:
-            with open(os.path.join(results_dir, 'n_per_year_per_slice.txt'), 'r') as input:
-                n_per_year_per_slice = input.read()
-            particle_sum *= float(n_per_year_per_slice)
-            print(f"{particle_cap} total leakage: {particle_sum}")
+            with open(os.path.join(results_dir, 'n_fluence_per_year.txt'), 'r') as input:
+                n_fluence_per_year = input.read()
+            particle_sum *= float(n_fluence_per_year)
+            print(f"{particle_cap} fluence per year: {particle_sum} cm^-2")
     except Exception as e:
         print(f"{e}")
 
@@ -116,7 +116,7 @@ def mesh_tally_to_vtk(particle="neutron", normalise = True):
         if normalise == True:
             flux = mesh_tally_results.get_values(scores=['flux'], value='mean')
         else:
-            with open(os.path.join(results_dir, 'n_per_year_per_slice.txt'), 'r') as input:
+            with open(os.path.join(results_dir, 'n_fluence_per_year.txt'), 'r') as input:
                 n_per_year_per_slice = input.read()
             flux = mesh_tally_results.get_values(scores=['flux'], value='mean')*float(n_per_year_per_slice)
         vtk_filename = os.path.join(results_dir, f"{particle}_flux.vtk")
@@ -129,8 +129,8 @@ def mesh_tally_to_vtk(particle="neutron", normalise = True):
 mesh_tally_to_vtk("neutron")
 mesh_tally_to_vtk("photon")
 
-plot_surface_current("photon")
-plot_surface_current("neutron")
+plot_surface_current("photon", normalise=False)
+plot_surface_current("neutron", normalise=False)
 
-sum_surface_current("photon")
-sum_surface_current("neutron")
+sum_surface_current("photon", normalise=False)
+sum_surface_current("neutron", normalise=False)
