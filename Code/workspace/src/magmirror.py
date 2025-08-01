@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import openmc_plasma_source
 import os
+from tape_compositions import get_winding_material
 
 # Set results directory to workspace/results
 results_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results'))
@@ -13,6 +14,8 @@ os.makedirs(results_dir, exist_ok=True)
 # Define cylinder length
 cylinder_length = 100.0
 
+mag_thickness = 40
+
 layers_thicknesses = [
     ("source + gap", 126), 
     ("first wall", 0.5),
@@ -20,7 +23,9 @@ layers_thicknesses = [
     ("channel", 21), #design point chosen for chrysopoeia paper
     ("structural2", 3), 
     ("blanket", 50), #very rough estimate from design point of paper
-    ("blanketouter", 3)
+    ("blanketouter", 3),
+    ("magnet gap", 60), #based on almost nothing
+    ("tf coil", mag_thickness) #based on ARC paper
 ]
 
 outer_rad = sum([thickness for (name, thickness) in layers_thicknesses])
@@ -122,29 +127,27 @@ eurofer97_steel.add_element("Fe", remaining_percent, 'wo')
 eurofer97_steel.temperature = 900.0
 
 
-# Axial boundaries (Z-planes)
+# Axial boundaries for overall simulation(Z-planes)
 z_min = openmc.ZPlane(z0=-cylinder_length/2, boundary_type='reflective')
 z_max = openmc.ZPlane(z0=cylinder_length/2, boundary_type='reflective')
+
+# Axial boundaries for TF coils
+cable_side_length = 4 #40mm square cables from ARC paper
+
+coil_width = 12*cable_side_length #12 cables (12x10 coil array)
+
+TF_z_min = openmc.ZPlane(z0=-coil_width/2) #TF coil situated at z=0
+TF_z_max = openmc.ZPlane(z0=coil_width/2)
 
 # Create cylinders for each radius
 cylinders = []
 for i, (name, radius) in enumerate(radial_layers):
-    if i != len(radial_layers)-1:
+    if i != len(radial_layers)-1: #not last layer
         cylinders.append(openmc.ZCylinder(r=radius))
     else:
         cylinders.append(openmc.ZCylinder(r=radius, boundary_type='vacuum')) #last cylinder has vacuum boundary, all others are transmissive
 
-# Create cells for each layer
-cells = []
-for i, (name, radius) in enumerate(radial_layers):
-    if i == 0:
-        # First layer (Plasma) - from center to first radius
-        region = -cylinders[i] & +z_min & -z_max
-    else:
-        # Subsequent layers - between current cylinder and previous cylinder
-        region = +cylinders[i-1] & -cylinders[i] & +z_min & -z_max
-    
-    cell = openmc.Cell(name=name, region=region)
+def cell_fill(cell):
     # Create cell with appropriate material based on layer type
     if "gap" in name:
         cell.fill = None #no material, vacuum
@@ -158,18 +161,46 @@ for i, (name, radius) in enumerate(radial_layers):
         cell.fill = blanket_mat
     elif name=="blanketouter":
         cell.fill = eurofer97_steel
+    elif name=='tf coil':
+        cell.fill = get_winding_material()
     else:
         raise RuntimeError(f"Unknown material for layer '{name}'")
+    return cell
+
+# Create cells for each layer
+cells = []
+for i, (name, radius) in enumerate(radial_layers):
+    if i == 0:
+        # First layer (Plasma) - from center to first radius
+        region = -cylinders[i] & +z_min & -z_max
+    # elif name=='tf coil':
+    #     #tf coil only extends a short width, not the whole simulation
+    #     region = +cylinders[i-1] & -cylinders[i] & +TF_z_min & -TF_z_max
+    #     lowervacregion = +cylinders[i-1] & -cylinders[i] & +z_min & -TF_z_min
+    #     uppervacregion = +cylinders[i-1] & -cylinders[i] & +TF_z_max & z_max
+    else:
+        # Subsequent layers - between current cylinder and previous cylinder
+        region = +cylinders[i-1] & -cylinders[i] & +z_min & -z_max
+    
+    cell = openmc.Cell(name=name, region=region)
+
+    cell_fill(cell)
     
     cells.append(cell)
+
+    # if name=="tf coil":
+    #     lowervaccell = openmc.Cell(name="lowervaccell", region=lowervacregion)
+    #     uppervaccell = openmc.Cell(name="uppervaccell", region=uppervacregion)
+    #     cells.append(lowervaccell)
+    #     cells.append(uppervaccell)
 
 # Create geometry
 geometry = openmc.Geometry(cells)
 
 # Create plots to visualize the radial structure
 # XY plot (radial view)
-plot_xy = geometry.plot(width=(2*outer_rad, 2*outer_rad), pixels=(1000, 1000), origin=(0, 0, 0), basis='xy')
-plot_xy.figure.savefig(os.path.join(results_dir, 'radial_build_xy.png'))
+# plot_xy = geometry.plot(width=(2*outer_rad, 2*outer_rad), pixels=(1000, 1000), origin=(0, 0, 0), basis='xy')
+# plot_xy.figure.savefig(os.path.join(results_dir, 'radial_build_xy.png'))
 
 # # XZ plot (longitudinal view)
 # plot_xz = geometry.plot(width=(500, 500), pixels=(1000, 1000), origin=(0, 0, 0), basis='xz')
@@ -201,14 +232,17 @@ major_r = 420 #cm, from paper design
 
 reactor_energy = reactor_power * 365.25 * 24 * 60 * 60 #reactor (thermal) energy in J in one year
 circum = 2*np.pi*major_r
-area = circum * cylinder_length
 slice_proportion = cylinder_length/circum #how much of full tokamak this slice represents, approx.
 slice_energy = reactor_energy * slice_proportion #energy in J generated by slice in 1 year
 e_per_fusion = 17.6 * 1.6e-13 #in J
 n_per_year_per_slice = slice_energy/e_per_fusion
-n_fluence_per_year = n_per_year_per_slice/area
+
+mag_r = outer_rad - mag_thickness
+mag_inner_area = mag_r * cylinder_length
+
+n_fluence_per_year = n_per_year_per_slice/mag_inner_area
 print(f"Neutrons produced per year (per {cylinder_length}cm slice): {n_per_year_per_slice}")
-print(f"Neutron fluence per year: {n_fluence_per_year} cm^-2")
+print(f"Neutron fluence per year at magnet surface: {n_fluence_per_year} cm^-2")
 n_per_year_file = os.path.join(results_dir, 'n_fluence_per_year.txt')
 with open(n_per_year_file, 'w') as output:
     output.write(str(n_fluence_per_year))
@@ -260,10 +294,10 @@ def volumetric_flux_tally(particle="neutron", name=None):
         Configured OpenMC mesh tally for the requested particle.
     """
     N = 360 # number of angular mesh components
-    rgrid = np.arange(0, outer_rad, 0.25)
-    #zgrid = np.arange(-cylinder_length/2, cylinder_length/2, cylinder_length)
+    rgrid = np.arange(0, outer_rad, 0.5)
+    #zgrid = np.linspace(-cylinder_length/2, cylinder_length/2, 10)
     zgrid = [-cylinder_length/2, cylinder_length/2]
-    phigrid = np.linspace(0, 2*np.pi, num=N+1)
+    phigrid = np.linspace(0, 2*np.pi, num=N)
 
 
     mesh = openmc.CylindricalMesh(rgrid, zgrid, phigrid)
@@ -281,7 +315,7 @@ def volumetric_flux_tally(particle="neutron", name=None):
     return mesh_tally
 
 
-def surface_particle_current_tally(particle="neutron", name=None):
+def surface_particle_current_tally(particle="neutron", name=None, layer=0):
     """
     Create an OpenMC Tally to measure particle current at the outer cylindrical surface
     across a range of energies.
@@ -308,7 +342,7 @@ def surface_particle_current_tally(particle="neutron", name=None):
       the surface in both directions.
     """
     
-    surface_filter = openmc.SurfaceFilter(bins=[cylinders[-1]]) # Filter for the vacuum boundary at the outermost radius
+    surface_filter = openmc.SurfaceFilter(bins=[cylinders[-(layer+1)]]) # Filter for the vacuum boundary at the outermost radius
     surface_filter.direction = 'both'  # could parameterize if you wish.
 
     # ParticleFilter for requested type (e.g., neutron or photon)
@@ -318,7 +352,7 @@ def surface_particle_current_tally(particle="neutron", name=None):
     e_filter = openmc.EnergyFilter(values=np.logspace(-2, 8, 100))
    
     if name is None:  # Use a descriptive default tally name if none is given
-        name = f"{particle.capitalize()} current at outer cylinder surface"
+        name = f"{particle.capitalize()} current at selected cylinder surface"
 
     # Create and configure the tally object
     surface_tally = openmc.Tally(name=name)
@@ -333,14 +367,14 @@ def surface_particle_current_tally(particle="neutron", name=None):
 tallies = openmc.Tallies()
 tallies.append(volumetric_flux_tally(particle="neutron")) # volumetric neutron flux tally
 tallies.append(volumetric_flux_tally(particle="photon"))  # volumetric photon flux tally
-tallies.append(surface_particle_current_tally(particle = "neutron"))  # surface neutron flux tally
-tallies.append(surface_particle_current_tally(particle = "photon"))   # surface photon flux tally
+tallies.append(surface_particle_current_tally(particle = "neutron", layer=1))  # magnet surface neutron flux tally
+tallies.append(surface_particle_current_tally(particle = "photon", layer=1))   # magnet surface photon flux tally
 
 settings = openmc.Settings()
 settings.photon_transport = True
 settings.source = [n_source]#, photon_source]
 settings.batches = 10
-settings.particles = 10000
+settings.particles = 200000
 settings.run_mode = 'fixed source'
 settings.output = {'path': results_dir}  # all output files now go to results_dir
 

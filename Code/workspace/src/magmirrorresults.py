@@ -31,7 +31,7 @@ def plot_surface_current(particle="neutron", normalise = True):
     Exports a .png semilog figure of the surface current. 
     """
     particle_cap = particle.capitalize()
-    tally_name = f"{particle_cap} current at outer cylinder surface"
+    tally_name = f"{particle_cap} current at selected cylinder surface"
     try:
         surface_tally_results = results.get_tally(name=tally_name)
         resultsdf = surface_tally_results.get_pandas_dataframe()
@@ -60,7 +60,7 @@ def plot_surface_current(particle="neutron", normalise = True):
 
 def sum_surface_current(particle='neutron', normalise = True):
     """
-    Prints the total number of particles passing through the outer surface.
+    Prints the total number of particles passing through the selected surface.
     
     Parameters
     ---------
@@ -73,7 +73,7 @@ def sum_surface_current(particle='neutron', normalise = True):
         If False, multiplies result by the number of neutrons produced in the slice per year (calculated in magmirror).
     """
     particle_cap = particle.capitalize()
-    tally_name = f"{particle_cap} current at outer cylinder surface"
+    tally_name = f"{particle_cap} current at selected cylinder surface"
     try:
         surface_tally_results = results.get_tally(name=tally_name)
         resultsdf = surface_tally_results.get_pandas_dataframe()
