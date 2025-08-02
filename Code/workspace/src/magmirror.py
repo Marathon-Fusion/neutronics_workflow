@@ -24,6 +24,7 @@ layers_thicknesses = [
     ("structural2", 3), 
     ("blanket", 50), #very rough estimate from design point of paper
     ("blanketouter", 3),
+    ("shield", 30), #arbitrary
     ("magnet gap", 60), #based on almost nothing
     ("tf coil", mag_thickness) #based on ARC paper
 ]
@@ -126,6 +127,22 @@ if remaining_percent < 0:
 eurofer97_steel.add_element("Fe", remaining_percent, 'wo')
 eurofer97_steel.temperature = 900.0
 
+# Neutron shield
+ti_hydride = openmc.Material()
+ti_hydride.add_elements_from_formula("TiH2")
+ti_hydride.set_density('g/cm3', 3.75) #this is density for a powder I think? not sure about packing fraction or its relevance
+
+zr_hydride = openmc.Material()
+zr_hydride.add_elements_from_formula("ZrH2")
+zr_hydride.set_density('g/cm3', 5.6)
+
+zr_boro = openmc.Material()
+zr_boro.add_elements_from_formula("ZrB4H16")
+zr_boro.set_density('g/cm3', 1.13)
+
+WC = openmc.Material()
+WC.add_elements_from_formula("WC")
+WC.set_density('g/cm3', 15.63)
 
 # Axial boundaries for overall simulation(Z-planes)
 z_min = openmc.ZPlane(z0=-cylinder_length/2, boundary_type='reflective')
@@ -161,6 +178,8 @@ def cell_fill(cell):
         cell.fill = blanket_mat
     elif name=="blanketouter":
         cell.fill = eurofer97_steel
+    elif name=='shield':
+        cell.fill = ti_hydride
     elif name=='tf coil':
         cell.fill = get_winding_material()
     else:
@@ -317,7 +336,7 @@ def volumetric_flux_tally(particle="neutron", name=None):
 
 def surface_particle_current_tally(particle="neutron", name=None, layer=0):
     """
-    Create an OpenMC Tally to measure particle current at the outer cylindrical surface
+    Create an OpenMC Tally to measure particle current at the selected cylindrical surface
     across a range of energies.
 
     Parameters
@@ -326,16 +345,16 @@ def surface_particle_current_tally(particle="neutron", name=None, layer=0):
         Particle type to tally ('neutron', 'photon', etc.). Default is 'neutron'.
     name : str, optional
         Optional name for the tally. If not provided, a descriptive default is used.
+    layer : int, optional
+        Surface to tally on, counting inwards from the outer surface of the magnet. Default is 0.
 
     Returns
     -------
     openmc.Tally
-        Configured tally object for outer surface current as a function of energy.
+        Configured tally object for selected surface current as a function of energy.
 
     Notes
     -----
-    - The surface filter targets the outermost cylinder, corresponding to the
-      vacuum boundary of the model geometry.
     - The energy filter divides the spectrum into 100 logarithmic bins from
       0.01eV up to 14.1MeV, suitable for both neutron and photon tallies.
     - The tally reports current of the specified particle type crossing
