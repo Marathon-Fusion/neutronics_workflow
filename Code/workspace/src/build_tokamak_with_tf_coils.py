@@ -1,10 +1,10 @@
 import openmc
 import numpy as np
+import scipy
 import os
 import paramak
 import cadquery
 from cad_to_dagmc import CadToDagmc
-from tape_compositions import get_winding_material
 
 # Set results directory to workspace/results
 results_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results'))
@@ -52,6 +52,19 @@ tot_reactor_thickness = sum(thickness for i, (layertype, thickness) in enumerate
 
 rotation_angle = 80.01
 
+def get_rotation_angle(deg = True):
+    """Returns the rotation angle used.
+    Parameters
+    ----------
+    deg : bool, optional
+        Determines whether or not to use degrees. Default is 'True'.
+    """
+
+    if deg == True:
+        return rotation_angle
+    else:
+        return rotation_angle*np.pi/180
+
 coil_inner_r = 800
 
 thickness = 400 #in radial direction
@@ -80,123 +93,50 @@ my_reactor = paramak.tokamak_from_plasma(
         extra_cut_shapes=[tf_coils]
     )
 
-##### MATERIALS DEFINITION #####
+##### REFLECTIVE PLANES #####
 
-#First wall#
-tungsten = openmc.Material(name='tungsten')
-tungsten.set_density('g/cm3', 19)
-tungsten.add_element('W', 1.0)
+def z_rotation_matrix(angle, deg=True):
+    if deg==True:
+        angle *= np.pi/180 #convert to rad
+    rot_mat = np.array([[np.cos(angle), -np.sin(angle), 0],
+                       [np.sin(angle), np.cos(angle), 0],
+                       [0, 0, 1]])
+    return rot_mat
 
-#Structural#
-vanadium_alloy = openmc.Material(name='vanadium_alloy') #VCr4Ti4 as per paper
-vanadium_alloy.set_density('g/cm3', 6.05)
-vanadium_alloy.add_element('V', 0.92, 'wo')
-vanadium_alloy.add_element('Cr', 0.04, 'wo')
-vanadium_alloy.add_element('Ti', 0.04, 'wo')
+plane1_norm = np.array([[0],
+                       [1],
+                       [0]]) #xz plane
 
-#Transmutation channel#
-mercury_dens = 13.6 #liquid hg
-li6_dens = 0.55 #liquid li
-channel_dens = (0.85 * mercury_dens) + (0.15 * li6_dens) #85% mercury
+plane2_norm = z_rotation_matrix(angle=rotation_angle) @ plane1_norm
 
-channel_mat = openmc.Material(name='channel_mat')
-channel_mat.set_density('g/cm3', channel_dens)
-hg_percent = 85
-# Add Hg with 90% Hg198 and 10% natural composition
-hg198_percent = hg_percent * 0.9
-natural_hg_percent = hg_percent * 0.1
+a1 = plane1_norm[0, 0]
+b1 = plane1_norm[1, 0]
+c1 = plane1_norm[2, 0]
 
-# Add Hg198
-channel_mat.add_nuclide('Hg198', hg198_percent/100.0, 'ao')
+a2 = plane2_norm[0, 0]
+b2 = plane2_norm[1, 0]
+c2 = plane2_norm[2, 0]
 
-# Add natural Hg isotopes (scaled to 10% of total Hg)
-# Natural abundances from ENDF/B-VII.1
-natural_abundances = {
-    'Hg196': 0.0015,
-    'Hg198': 0.0997,
-    'Hg199': 0.1687,
-    'Hg200': 0.2310,
-    'Hg201': 0.1318,
-    'Hg202': 0.2986,
-    'Hg204': 0.0687
-}
+plane1 = openmc.Plane(
+    a=a1,
+    b=b1,
+    c=c1, #plane at y=0
+    d=0,
+    boundary_type='reflective',
+    name="plane1"
+)
 
-# Calculate total abundance excluding Hg198
-total_non_hg198_abundance = sum(abundance for isotope, abundance in natural_abundances.items() 
-                                if isotope != 'Hg198')
+plane2 = openmc.Plane(
+    a=a2,
+    b=b2,
+    c=c2,
+    d=0,
+    boundary_type='reflective',
+    name="plane2"
+)
 
-# Scale natural abundances to the remaining 10% of Hg, excluding Hg198
-for isotope, abundance in natural_abundances.items():
-    if isotope != 'Hg198':  # Skip Hg198 as it's already added
-        # Scale the abundance to make the sum of remaining isotopes equal to natural_hg_percent
-        scaled_abundance = (abundance / total_non_hg198_abundance) * natural_hg_percent
-        channel_mat.add_nuclide(isotope, scaled_abundance/100, 'ao')
-
-#Li addition
-li_percent = 15
-li6_percent = li_percent * 0.9
-li7_percent = li_percent * 0.1
-channel_mat.add_nuclide('Li6', li6_percent/100.0, 'ao')
-channel_mat.add_nuclide('Li7', li7_percent/100.0, 'ao')
-
-#Blanket#
-blanket_mat = openmc.Material(name='blanket_mat')
-blanket_mat.set_density('g/cm3', 1.94)
-blanket_mat.add_element('F', 4.)
-blanket_mat.add_element('Be', 1.)
-blanket_mat.add_nuclide('Li6', 1.8)
-blanket_mat.add_nuclide('Li7', 0.2)
-blanket_mat.temperature = 900.0
-
-#Outer structure#
-eurofer97_steel = openmc.Material(name='blanketouter')
-eurofer97_steel.set_density('g/cm3', 7.75)
-# Create composition list 
-eurofer97_steel_comp_list = [("Cr", 0.0893), ("C",  0.0012), ("Mn", 0.0047),
-                ("V",  0.0020), ("W",  0.0107), ("Ta", 0.0014),
-                ("Ti", 0.000009), ("N",  0.00018), ("P",  0.000005),
-                ("S",  0.000004), ("B",  0.000001), ("Si", 0.00006),
-                ("Nb", 0.000002), ("Mo", 0.000015), ("Ni", 0.000002),
-                ("Cu", 0.000003)]
-
-subtotal = 0.0
-for symbol, wt_frac in eurofer97_steel_comp_list:
-    eurofer97_steel.add_element(symbol, wt_frac, 'wo')
-    subtotal += wt_frac
-
-# Make the remaining composition iron 
-remaining_percent = 1.0 - subtotal
-if remaining_percent < 0:
-    raise ValueError(f"Alloy fractions sum to {subtotal:.5f} > 1.0!")
-eurofer97_steel.add_element("Fe", remaining_percent, 'wo')
-eurofer97_steel.temperature = 900.0
-
-# tf coil material
-
-tf_coil_mat = get_winding_material()
-
-# Neutron shield material
-ti_hydride = openmc.Material(name='TiH2')
-ti_hydride.add_elements_from_formula("TiH2")
-ti_hydride.set_density('g/cm3', 3.75) #this is density for a powder I think? not sure about packing fraction or its relevance
-
-zr_hydride = openmc.Material(name='ZrH2')
-zr_hydride.add_elements_from_formula("ZrH2")
-zr_hydride.set_density('g/cm3', 5.6)
-
-zr_boro = openmc.Material(name='ZrB4H16')
-zr_boro.add_elements_from_formula("ZrB4H16")
-zr_boro.set_density('g/cm3', 1.13)
-
-WC = openmc.Material(name='WC')
-WC.add_elements_from_formula("WC")
-WC.set_density('g/cm3', 15.63)
-
-#placeholder - effectively vacuum
-
-placeholder = openmc.Material(name='placeholder')
-placeholder.add_element("H", 1.0)
-placeholder.set_density('g/cm3', 1e-12) #effectively 0
+print(f"Plane 1 norm: {plane1_norm}")
+print(f"Plane 2 norm: {plane2_norm}")
 
 ##### EXPORT TO H5M #####
 
@@ -210,7 +150,7 @@ A.add_cadquery_object(my_reactor, material_tags=["tfcoil",
                                                 "vanadium_alloy",
                                                 "blanket_mat",
                                                 "blanketouter",
-                                                "TiH2",
+                                                "shield",
                                                 "placeholder"])
 A.export_dagmc_h5m_file(filename=os.path.join(results_dir, f"tokamak_with_tf_coils.h5m"), max_mesh_size=10, min_mesh_size=1, scale_factor=.1)
 
@@ -221,13 +161,12 @@ A.export_dagmc_h5m_file(filename=os.path.join(results_dir, f"tokamak_with_tf_coi
 # fusions_per_s = reactor_power/e_per_fusion
 # n_per_s = fusions_per_s
 
-def main():
-    print(f"Total reactor thickness (including shield): {tot_reactor_thickness}mm")
-    print(f"Inner radius of TF coil: {coil_inner_r}mm")
-    filename = "reactor_with_tf_coils.step"
-    #my_reactor.export(os.path.join(results_dir, filename))
-    #print(f"Tokamak model saved as {filename}")
-    print(f"{A}")
+# def main():
+print(f"Total reactor thickness (including shield): {tot_reactor_thickness}mm")
+print(f"Inner radius of TF coil: {coil_inner_r}mm")
+filename = "reactor_with_tf_coils.step"
+my_reactor.export(os.path.join(results_dir, filename))
+print(f"Tokamak model saved as {filename}")
 
-if __name__ == "main":
-    main()
+# if __name__ == "main":
+#     main()
