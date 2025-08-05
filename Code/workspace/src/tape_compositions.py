@@ -70,6 +70,7 @@ for (element, wtfrac) in stainless_comp:
 stainless.add_element("Fe", remaining_fe_frac, percent_type='wo')
 
 winding_pack = openmc.Material.mix_materials(
+    name = "tfcoil",
     materials = [stainless, Cu, hts_tape],
     fracs = [0.46, 0.46, 0.08], #roughly, from ARC paper
     percent_type='vo'
