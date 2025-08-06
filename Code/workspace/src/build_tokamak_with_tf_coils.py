@@ -74,99 +74,46 @@ coil_outer_r = coil_inner_r + thickness + tot_reactor_thickness + 2*gap_size - s
 
 #again this princeton coil function is not very stable, check output is correct every time even after changing innocuous things
 
-tf_coils = paramak.toroidal_field_coil_princeton_d(
-    r1 = coil_inner_r,
-    r2 = coil_outer_r,
-    azimuthal_placement_angles=list(np.arange(0, rotation_angle, 20)), #20deg spacing like ARC 2015
-    rotation_angle=rotation_angle,
-    thickness = thickness, 
-    distance=480
-)
-
-###### REACTOR #####
-#all distances in mm
-my_reactor = paramak.tokamak_from_plasma(
-        radial_build=radial_build[0],
-        elongation=1.6, #from paper
-        triangularity=0.25, #from paper
-        rotation_angle=rotation_angle, #for simplicity
-        extra_cut_shapes=[tf_coils]
+def main():
+    tf_coils = paramak.toroidal_field_coil_princeton_d(
+        r1 = coil_inner_r,
+        r2 = coil_outer_r,
+        azimuthal_placement_angles=list(np.arange(0, rotation_angle, 20)), #20deg spacing like ARC 2015
+        rotation_angle=rotation_angle,
+        thickness = thickness, 
+        distance=480
     )
 
-##### REFLECTIVE PLANES #####
+    ###### REACTOR #####
+    #all distances in mm
+    my_reactor = paramak.tokamak_from_plasma(
+            radial_build=radial_build[0],
+            elongation=1.6, #from paper
+            triangularity=0.25, #from paper
+            rotation_angle=rotation_angle, #for simplicity
+            extra_cut_shapes=[tf_coils]
+        )
 
-def z_rotation_matrix(angle, deg=True):
-    if deg==True:
-        angle *= np.pi/180 #convert to rad
-    rot_mat = np.array([[np.cos(angle), -np.sin(angle), 0],
-                       [np.sin(angle), np.cos(angle), 0],
-                       [0, 0, 1]])
-    return rot_mat
+    ##### EXPORT TO H5M #####
 
-plane1_norm = np.array([[0],
-                       [1],
-                       [0]]) #xz plane
+    A = CadToDagmc()
+    A.add_cadquery_object(my_reactor, material_tags=["tfcoil",
+                                                    "placeholder",
+                                                    "tungsten",
+                                                    "vanadium_alloy",
+                                                    "channel_mat",
+                                                    "vanadium_alloy",
+                                                    "blanket_mat",
+                                                    "blanketouter",
+                                                    "shield",
+                                                    "placeholder"]) #very specific order, no touchy
+    A.export_dagmc_h5m_file(filename=os.path.join(results_dir, f"tokamak_with_tf_coils.h5m"), max_mesh_size=15, min_mesh_size=3, scale_factor=.1)
 
-plane2_norm = z_rotation_matrix(angle=rotation_angle) @ plane1_norm
+    print(f"Total reactor thickness (including shield): {tot_reactor_thickness}mm")
+    print(f"Inner radius of TF coil: {coil_inner_r}mm")
+    filename = "reactor_with_tf_coils.step"
+    my_reactor.export(os.path.join(results_dir, filename))
+    print(f"Tokamak model saved as {filename}")
 
-a1 = plane1_norm[0, 0]
-b1 = plane1_norm[1, 0]
-c1 = plane1_norm[2, 0]
-
-a2 = plane2_norm[0, 0]
-b2 = plane2_norm[1, 0]
-c2 = plane2_norm[2, 0]
-
-plane1 = openmc.Plane(
-    a=a1,
-    b=b1,
-    c=c1, #plane at y=0
-    d=0,
-    boundary_type='reflective',
-    name="plane1"
-)
-
-plane2 = openmc.Plane(
-    a=a2,
-    b=b2,
-    c=c2,
-    d=0,
-    boundary_type='reflective',
-    name="plane2"
-)
-
-print(f"Plane 1 norm: {plane1_norm}")
-print(f"Plane 2 norm: {plane2_norm}")
-
-##### EXPORT TO H5M #####
-
-
-A = CadToDagmc()
-A.add_cadquery_object(my_reactor, material_tags=["tfcoil",
-                                                "placeholder",
-                                                "tungsten",
-                                                "vanadium_alloy",
-                                                "channel_mat",
-                                                "vanadium_alloy",
-                                                "blanket_mat",
-                                                "blanketouter",
-                                                "shield",
-                                                "placeholder"])
-A.export_dagmc_h5m_file(filename=os.path.join(results_dir, f"tokamak_with_tf_coils.h5m"), max_mesh_size=10, min_mesh_size=1, scale_factor=.1)
-
-# ######################### Neutrons per second ######################
-
-# reactor_power = 1e9 #1GWth
-# e_per_fusion = 17.6 * 1.6e-13 #in J
-# fusions_per_s = reactor_power/e_per_fusion
-# n_per_s = fusions_per_s
-
-# def main():
-print(f"Total reactor thickness (including shield): {tot_reactor_thickness}mm")
-print(f"Inner radius of TF coil: {coil_inner_r}mm")
-filename = "reactor_with_tf_coils.step"
-my_reactor.export(os.path.join(results_dir, filename))
-print(f"Tokamak model saved as {filename}")
-
-# if __name__ == "main":
-#     main()
+if __name__ == "__main__":
+    main()

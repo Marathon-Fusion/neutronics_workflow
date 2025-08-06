@@ -103,7 +103,7 @@ eurofer97_steel.temperature = 900.0
 
 # tf coil material
 
-tf_coil_mat = get_winding_material(name="tf coil")
+tf_coil_mat = get_winding_material(name="tfcoil")
 
 # Neutron shield material
 ti_hydride = openmc.Material(name='shield')
@@ -129,7 +129,12 @@ placeholder.add_element("H", 1.0)
 placeholder.set_density('g/cm3', 1e-12) #effectively 0
 
 #full list for sim
-materials_list = [tungsten, vanadium_alloy, channel_mat, blanket_mat, ti_hydride, placeholder, tf_coil_mat]
+materials_list = [tungsten, vanadium_alloy, channel_mat, blanket_mat, ti_hydride, placeholder, tf_coil_mat, eurofer97_steel]
+
+def get_materials(materials_list):
+    return openmc.Materials(materials_list)
+
+materials = get_materials(materials_list)
 
 ##### NEUTRON SOURCE #####
 
@@ -151,44 +156,185 @@ def make_ring_source(r, plot=False):
         sourceplot = openmc_source_plotter.plot_source_position(n_source)
         sourceplot.write_html(os.path.join(results_dir, filename))
         print(f"Neutron ring source plot saved as {filename}")
+    
+    return n_source
 
-make_ring_source(r=210+440/2, plot=True) #r is inner reactor edge + half reactor thickness
+n_source = make_ring_source(r=210+440/2, plot=True) #r is inner reactor edge + half reactor thickness
+
+##### REFLECTIVE PLANES #####
+
+def z_rotation_matrix(angle, deg=True):
+    if deg==True:
+        angle *= np.pi/180 #convert to rad
+    rot_mat = np.array([[np.cos(angle), -np.sin(angle), 0],
+                    [np.sin(angle), np.cos(angle), 0],
+                    [0, 0, 1]])
+    return rot_mat
+
+plane1_norm = np.array([[0],
+                    [1],
+                    [0]]) #xz plane
+
+plane2_norm = z_rotation_matrix(angle=get_rotation_angle(deg=True), deg=True) @ plane1_norm
+
+a1 = plane1_norm[0, 0]
+b1 = plane1_norm[1, 0]
+c1 = plane1_norm[2, 0]
+
+a2 = plane2_norm[0, 0]
+b2 = plane2_norm[1, 0]
+c2 = plane2_norm[2, 0]
+
+plane1 = openmc.Plane(
+    a=a1,
+    b=b1,
+    c=c1, #plane at y=0
+    d=0,
+    boundary_type='reflective',
+    name="plane1"
+)
+
+plane2 = openmc.Plane(
+    a=a2,
+    b=b2,
+    c=c2,
+    d=0,
+    boundary_type='reflective',
+    name="plane2"
+)
+
+# print(f"Plane 1 norm: {plane1_norm}")
+# print(f"Plane 2 norm: {plane2_norm}")
 
 ##### BUILD GEOMETRY #####
 
-dagmc_universe = openmc.DAGMCUniverse(geometry_h5m)
-print(dagmc_universe.material_names)
-bounded_dag_univ = dagmc_universe.bounded_universe()
+dagmc_universe = openmc.DAGMCUniverse(filename=geometry_h5m, auto_geom_ids = True)
+print(f"No. of cells in DAGMC model: {dagmc_universe.n_cells}")
 
+#returns openmc.Universe bounded by a Cell
+bounded_dag_univ = dagmc_universe.bounded_universe(bounded_type='sphere', padding_distance = 1) 
+#padding distance ensures reflective planes get to do their thing and the vacuum boundary of the universe doesn't eat all the neutrons
+#only really necessary when using a 'box' bounded type but used anyway for robustness
 
+print(bounded_dag_univ.cells)
+border_cell_region = bounded_dag_univ.cells[10000].region & +plane1 & -plane2
+border_cell = openmc.Cell(region=border_cell_region)
+border_cell.fill = bounded_dag_univ
 
-def get_materials(materials_list):
-    return openmc.Materials(materials_list)
+# Creates a cell from the region and fills the cell with the dagmc geometry
+geometry = openmc.Geometry([border_cell])
 
-##### CREATE TALLIES #####
+##### TALLIES #####
 
-# def surface_particle_current_tally(particle="neutron", name=None, layer=0):
-#     """
-#     Create an OpenMC Tally to measure particle current at the selected surface
-#     across a range of energies.
+def extract_surfaces(region):
+    """Recursively extract surfaces from a region expression."""
+    surfaces = set()
+    if isinstance(region, openmc.Surface):
+        surfaces.add(region)
+    elif isinstance(region, openmc.Region):
+        for subregion in region.get_children():
+            surfaces.update(extract_surfaces(subregion))
+    return surfaces
 
-#     Parameters
-#     ----------
-#     particle : str, optional
-#         Particle type to tally ('neutron', 'photon', etc.). Default is 'neutron'.
-#     name : str, optional
-#         Optional name for the tally. If not provided, a descriptive default is used.
+def get_leakage_tally(particle="neutron", name='leakage tally'):
+    """Returns a Tally object measuring leakage across the outer surface of the overall geometry"""
 
-#     Returns
-#     -------
-#     openmc.Tally
-#         Configured tally object for selected surface current as a function of energy.
-
-#     Notes
-#     -----
-#     - The energy filter divides the spectrum into 100 logarithmic bins from
-#       0.01eV up to 14.1MeV, suitable for both neutron and photon tallies.
-#     - The tally reports current of the specified particle type crossing
-#       the surface in both directions.
-#     """
+    bins = extract_surfaces(border_cell_region)
+    surface_filter =  openmc.SurfaceFilter(bins=[bins])
+    particle_filter = openmc.ParticleFilter([particle])
+    leak_tally = openmc.Tally(name=name)
+    leak_tally.filters = [surface_filter, particle_filter]
+    leak_tally.scores = ['leakage']
     
+    return leak_tally
+
+def volumetric_flux_tally(particle="neutron", name=None):
+    """
+    Returns an openmc.Tally object for flux through each element of a mesh
+    for a specified particle type ('neutron' or 'photon').
+
+    Parameters:
+    -----------
+    particle : str
+        The type of particle to tally ('neutron' or 'photon').
+    name : str (optional)
+        Name to give the tally. Defaults to '{Particle} flux in mesh'.
+
+    Returns:
+    --------
+    openmc.Tally
+        Configured OpenMC mesh tally for the requested particle.
+    """
+    rgrid = np.arange(0, 750, 5)
+    phigrid = np.linspace(0, get_rotation_angle(deg=False), num=int(get_rotation_angle(deg=True)/2)) #2 degree steps
+    thetagrid = np.linspace(0, np.pi, 90)
+
+    mesh = openmc.SphericalMesh(r_grid=rgrid, 
+                                  phi_grid=phigrid,
+                                  theta_grid=thetagrid)
+    
+    print(f"No. of mesh tally cells = {np.prod(mesh.dimension)}")
+    mesh_filter = openmc.MeshFilter(mesh)
+    p_filter = openmc.ParticleFilter([particle])
+
+    if name is None:
+        name = f"{particle.capitalize()} flux in mesh"
+
+    mesh_tally = openmc.Tally(name=name)
+    mesh_tally.filters = [mesh_filter, p_filter]
+    mesh_tally.scores = ['flux']
+
+    return mesh_tally
+
+tallies = openmc.Tallies()
+#tallies.append(get_leakage_tally())
+tallies.append(volumetric_flux_tally())
+
+##### SETTINGS #####
+
+settings = openmc.Settings()
+settings.photon_transport = True
+settings.source = [n_source]
+settings.batches = 10
+settings.particles = 100
+settings.run_mode = 'fixed source'
+settings.output = {'path': results_dir}  # all output files now go to results_dir
+
+model = openmc.Model(geometry=geometry, settings=settings, materials=materials, tallies=tallies)
+
+model.run()
+
+##### RESULTS #####
+
+statepoint_path = os.path.join(results_dir, "statepoint.10.h5")
+results = openmc.StatePoint(statepoint_path)
+
+def mesh_tally_to_vtk(particle="neutron"):
+    """
+    Export a mesh flux tally to VTK for the specified particle type.
+
+    Parameters
+    ----------
+    particle : str, optional
+        The type of particle mesh tally to export ('neutron' or 'photon').
+        Default is 'neutron'.
+
+    Notes
+    -----
+    Exports a VTK file named 'neutron_flux.vtk' or 'photon_flux.vtk'.
+    """
+    # Capitalize first letter for tally name
+    particle_cap = particle.capitalize()
+    tally_name = f"{particle_cap} flux in mesh"
+    try:
+        mesh_tally_results = results.get_tally(name=tally_name)
+        mesh = mesh_tally_results.find_filter(openmc.MeshFilter).mesh
+        flux = mesh_tally_results.get_values(scores=['flux'], value='mean')
+        vtk_filename = os.path.join(results_dir, f"{particle}_flux.vtk")
+        mesh.write_data_to_vtk(filename=vtk_filename, datasets={"mean": flux})
+        print(f"Exported {particle} flux to {vtk_filename}")
+    except Exception as e:
+        print(f"No {particle} mesh flux tally found or export failed: {e}")
+
+
+mesh_tally_to_vtk("neutron")
