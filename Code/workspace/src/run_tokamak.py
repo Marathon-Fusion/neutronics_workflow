@@ -216,8 +216,7 @@ bounded_dag_univ = dagmc_universe.bounded_universe(bounded_type='sphere', paddin
 #padding distance ensures reflective planes get to do their thing and the vacuum boundary of the universe doesn't eat all the neutrons
 #only really necessary when using a 'box' bounded type but used anyway for robustness
 
-print(bounded_dag_univ.cells)
-border_cell_region = bounded_dag_univ.cells[10000].region & +plane1 & -plane2
+border_cell_region = bounded_dag_univ.cells[10000].region & +plane1 & -plane2 #wedge contained between the two planes and the boundaries of the universe
 border_cell = openmc.Cell(region=border_cell_region)
 border_cell.fill = bounded_dag_univ
 
