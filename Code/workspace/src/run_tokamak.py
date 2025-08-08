@@ -321,11 +321,14 @@ for id in range(30):
 
 ##### SETTINGS #####
 
+batch_no = 100
+particle_no = 100000
+
 settings = openmc.Settings()
 #settings.photon_transport = True
 settings.source = [n_source]
-settings.batches = 100
-settings.particles = 100000
+settings.batches = batch_no
+settings.particles = particle_no
 settings.run_mode = 'fixed source'
 settings.output = {'path': results_dir, 'tallies': False}  # all output files now go to results_dir
 
@@ -334,7 +337,7 @@ model.run()
 
 ##### RESULTS #####
 
-statepoint_path = os.path.join(results_dir, "statepoint.100.h5")
+statepoint_path = os.path.join(results_dir, f"statepoint.{batch_no}.h5")
 results = openmc.StatePoint(statepoint_path)
 
 def get_area(surface_id):
@@ -382,6 +385,6 @@ def mesh_tally_to_vtk(particle="neutron"):
     except Exception as e:
         print(f"No {particle} mesh flux tally found or export failed: {e}")
 
-for id in range(30):
+for id in range(len(tf_surfaceobjs)):
     get_surface_current(id+1, per_unit_area=False)
 #mesh_tally_to_vtk("neutron")
