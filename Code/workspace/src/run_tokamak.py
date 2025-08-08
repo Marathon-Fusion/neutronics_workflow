@@ -4,8 +4,11 @@ import openmc_source_plotter
 import os
 from tape_compositions import get_winding_material
 from build_tokamak_with_tf_coils import get_rotation_angle
+import pydagmc
 
+print(f"Current file path: {os.path.dirname(__file__)}")
 results_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results'))
+print(f"Results directory location: {results_dir}")
 os.makedirs(results_dir, exist_ok=True)
 
 geometry_h5m = os.path.join(results_dir, "tokamak_with_tf_coils.h5m")
@@ -191,7 +194,8 @@ plane1 = openmc.Plane(
     c=c1, #plane at y=0
     d=0,
     boundary_type='reflective',
-    name="plane1"
+    name="plane1",
+    surface_id=7001
 )
 
 plane2 = openmc.Plane(
@@ -200,7 +204,8 @@ plane2 = openmc.Plane(
     c=c2,
     d=0,
     boundary_type='reflective',
-    name="plane2"
+    name="plane2",
+    surface_id=7002
 )
 
 # print(f"Plane 1 norm: {plane1_norm}")
@@ -208,7 +213,7 @@ plane2 = openmc.Plane(
 
 ##### BUILD GEOMETRY #####
 
-dagmc_universe = openmc.DAGMCUniverse(filename=geometry_h5m, auto_geom_ids = True)
+dagmc_universe = openmc.DAGMCUniverse(filename=geometry_h5m, auto_geom_ids = False, universe_id = 5000)
 print(f"No. of cells in DAGMC model: {dagmc_universe.n_cells}")
 
 #returns openmc.Universe bounded by a Cell
@@ -217,37 +222,61 @@ bounded_dag_univ = dagmc_universe.bounded_universe(bounded_type='sphere', paddin
 #only really necessary when using a 'box' bounded type but used anyway for robustness
 
 border_cell_region = bounded_dag_univ.cells[10000].region & +plane1 & -plane2 #wedge contained between the two planes and the boundaries of the universe
-border_cell = openmc.Cell(region=border_cell_region)
+border_cell = openmc.Cell(region=border_cell_region,
+                          cell_id=6000)
 border_cell.fill = bounded_dag_univ
 
 # Creates a cell from the region and fills the cell with the dagmc geometry
 geometry = openmc.Geometry([border_cell])
 
+print("Constructed geometry")
+
+##### GET SURFACE IDS FOR TF COILS #####
+
+materials_model = pydagmc.Model(geometry_h5m)
+
+tf_vols = materials_model.find_volumes_by_material('tfcoil')
+
+#biglist is nested
+tf_surfaces_biglist = []
+for vol in tf_vols:
+    tf_surfaces_biglist.append(vol.surfaces)
+
+#flattens list - more efficient ways to achieve this results but whatevs
+tf_surfaceobjs = []
+for parentvol in tf_surfaces_biglist:
+    for surface in parentvol:
+        tf_surfaceobjs.append(surface)
+
+#print(f"TF coil volumes: {tf_vols}")
+#print(f"TF coil surfaces: {tf_surfaceobjs}")
+
+print(f"No. of TF coil volumes found: {len(tf_vols)}")
+print(f"No. of TF coil surfaces found: {len(tf_surfaceobjs)}")
+
 ##### TALLIES #####
 
-def extract_surfaces(region):
-    """Recursively extract surfaces from a region expression."""
-    surfaces = set()
-    if isinstance(region, openmc.Surface):
-        surfaces.add(region)
-    elif isinstance(region, openmc.Region):
-        for subregion in region.get_children():
-            surfaces.update(extract_surfaces(subregion))
-    return surfaces
+def surface_tallies_from_pydagmc(surface_id, particle="neutron", name=None):
+    """
+    Documentation not finished
+    """
 
-def get_leakage_tally(particle="neutron", name='leakage tally'):
-    """Returns a Tally object measuring leakage across the outer surface of the overall geometry"""
+    surface_id = int(surface_id)
 
-    bins = extract_surfaces(border_cell_region)
-    surface_filter =  openmc.SurfaceFilter(bins=[bins])
-    particle_filter = openmc.ParticleFilter([particle])
-    leak_tally = openmc.Tally(name=name)
-    leak_tally.filters = [surface_filter, particle_filter]
-    leak_tally.scores = ['leakage']
-    
-    return leak_tally
+    surface_filter = openmc.SurfaceFilter(bins=surface_id)
+    surface_filter.direction = 'both'
+    p_filter = openmc.ParticleFilter(particle)
 
-def volumetric_flux_tally(particle="neutron", name=None):
+    if name is None:
+        name = f"{particle} current across surface {surface_id}"
+
+    surface_tally = openmc.Tally(name=name)
+    surface_tally.filters = [surface_filter, p_filter]
+    surface_tally.scores = ['current']
+
+    return surface_tally
+
+def volumetric_flux_tally_by_grid(particle="neutron", name=None):
     """
     Returns an openmc.Tally object for flux through each element of a mesh
     for a specified particle type ('neutron' or 'photon').
@@ -264,9 +293,9 @@ def volumetric_flux_tally(particle="neutron", name=None):
     openmc.Tally
         Configured OpenMC mesh tally for the requested particle.
     """
-    rgrid = np.arange(0, 750, 5)
+    rgrid = np.arange(0, 945, 0.25)
     phigrid = np.linspace(0, get_rotation_angle(deg=False), num=int(get_rotation_angle(deg=True)/2)) #2 degree steps
-    thetagrid = np.linspace(0, np.pi, 90)
+    thetagrid = np.linspace(0, np.pi, 45) #4deg steps
 
     mesh = openmc.SphericalMesh(r_grid=rgrid, 
                                   phi_grid=phigrid,
@@ -286,27 +315,45 @@ def volumetric_flux_tally(particle="neutron", name=None):
     return mesh_tally
 
 tallies = openmc.Tallies()
-#tallies.append(get_leakage_tally())
-tallies.append(volumetric_flux_tally())
+#tallies.append(volumetric_flux_tally_by_grid())
+for id in range(30):
+    tallies.append(surface_tallies_from_pydagmc(surface_id=id+1))
 
 ##### SETTINGS #####
 
 settings = openmc.Settings()
-settings.photon_transport = True
+#settings.photon_transport = True
 settings.source = [n_source]
-settings.batches = 10
-settings.particles = 100
+settings.batches = 100
+settings.particles = 100000
 settings.run_mode = 'fixed source'
-settings.output = {'path': results_dir}  # all output files now go to results_dir
+settings.output = {'path': results_dir, 'tallies': False}  # all output files now go to results_dir
 
-model = openmc.Model(geometry=geometry, settings=settings, materials=materials, tallies=tallies)
-
+model = openmc.model.Model(geometry=geometry, settings=settings, materials=materials, tallies=tallies)
 model.run()
 
 ##### RESULTS #####
 
-statepoint_path = os.path.join(results_dir, "statepoint.10.h5")
+statepoint_path = os.path.join(results_dir, "statepoint.100.h5")
 results = openmc.StatePoint(statepoint_path)
+
+def get_area(surface_id):
+    surface = tf_surfaceobjs[surface_id-1] #e.g. surface id 1 corresponds to first entry of list
+    area = surface.area
+    return area
+
+def get_surface_current(surface_id, particle='neutron', per_unit_area=True):
+    tally_name = f"{particle} current across surface {surface_id}"
+    try:
+        surface_tally_results = results.get_tally(name=tally_name)
+        resultsdf = surface_tally_results.get_pandas_dataframe()
+        particle_sum = sum(resultsdf['mean'])
+        if per_unit_area == True:
+            print(f"{particle} current per unit area for surface {surface_id}: {particle_sum/get_area(surface_id)}")
+        else:
+            print(f"{particle} current for surface {surface_id}: {particle_sum}")
+    except Exception as e:
+        print(f"{e}")
 
 def mesh_tally_to_vtk(particle="neutron"):
     """
@@ -335,5 +382,6 @@ def mesh_tally_to_vtk(particle="neutron"):
     except Exception as e:
         print(f"No {particle} mesh flux tally found or export failed: {e}")
 
-
-mesh_tally_to_vtk("neutron")
+for id in range(30):
+    get_surface_current(id+1, per_unit_area=False)
+#mesh_tally_to_vtk("neutron")

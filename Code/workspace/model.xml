@@ -2,15 +2,15 @@
 <model>
   <materials>
     <material id="7" name="tungsten">
-      <density units="g/cm3" value="19"/>
-      <nuclide ao="0.0012" name="W180"/>
-      <nuclide ao="0.265" name="W182"/>
-      <nuclide ao="0.1431" name="W183"/>
-      <nuclide ao="0.3064" name="W184"/>
-      <nuclide ao="0.2843" name="W186"/>
+      <density value="19" units="g/cm3"/>
+      <nuclide name="W180" ao="0.0012"/>
+      <nuclide name="W182" ao="0.265"/>
+      <nuclide name="W183" ao="0.1431"/>
+      <nuclide name="W184" ao="0.3064"/>
+      <nuclide name="W186" ao="0.2843"/>
     </material>
     <material id="8" name="vanadium_alloy">
-      <density units="g/cm3" value="6.05"/>
+      <density value="6.05" units="g/cm3"/>
       <nuclide name="V50" wo="0.0022551070895674248"/>
       <nuclide name="V51" wo="0.9177448929104326"/>
       <nuclide name="Cr50" wo="0.0016694746490873253"/>
@@ -24,26 +24,26 @@
       <nuclide name="Ti50" wo="0.0021619518668144254"/>
     </material>
     <material id="9" name="channel_mat">
-      <density units="g/cm3" value="11.642499999999998"/>
-      <nuclide ao="0.765" name="Hg198"/>
-      <nuclide ao="0.00014161946017994003" name="Hg196"/>
-      <nuclide ao="0.015927468621570587" name="Hg199"/>
-      <nuclide ao="0.021809396867710763" name="Hg200"/>
-      <nuclide ao="0.012443629901144062" name="Hg201"/>
-      <nuclide ao="0.028191713873153387" name="Hg202"/>
-      <nuclide ao="0.006486171276241253" name="Hg204"/>
-      <nuclide ao="0.135" name="Li6"/>
-      <nuclide ao="0.015" name="Li7"/>
+      <density value="11.642499999999998" units="g/cm3"/>
+      <nuclide name="Hg198" ao="0.765"/>
+      <nuclide name="Hg196" ao="0.00014161946017994003"/>
+      <nuclide name="Hg199" ao="0.015927468621570587"/>
+      <nuclide name="Hg200" ao="0.021809396867710763"/>
+      <nuclide name="Hg201" ao="0.012443629901144062"/>
+      <nuclide name="Hg202" ao="0.028191713873153387"/>
+      <nuclide name="Hg204" ao="0.006486171276241253"/>
+      <nuclide name="Li6" ao="0.135"/>
+      <nuclide name="Li7" ao="0.015"/>
     </material>
     <material id="10" name="blanket_mat" temperature="900.0">
-      <density units="g/cm3" value="1.94"/>
-      <nuclide ao="4.0" name="F19"/>
-      <nuclide ao="1.0" name="Be9"/>
-      <nuclide ao="1.8" name="Li6"/>
-      <nuclide ao="0.2" name="Li7"/>
+      <density value="1.94" units="g/cm3"/>
+      <nuclide name="F19" ao="4.0"/>
+      <nuclide name="Be9" ao="1.0"/>
+      <nuclide name="Li6" ao="1.8"/>
+      <nuclide name="Li7" ao="0.2"/>
     </material>
     <material id="11" name="blanketouter" temperature="900.0">
-      <density units="g/cm3" value="7.75"/>
+      <density value="7.75" units="g/cm3"/>
       <nuclide name="Cr50" wo="0.0037271021540874537"/>
       <nuclide name="Cr52" wo="0.07474353057975189"/>
       <nuclide name="Cr53" wo="0.00863851302907694"/>
@@ -97,101 +97,96 @@
       <nuclide name="Fe58" wo="0.0026048707790681186"/>
     </material>
     <material id="12" name="tfcoil">
-      <density units="g/cm3" value="47.28784771098556"/>
-      <nuclide ao="0.0007160567250306976" name="C0"/>
-      <nuclide ao="0.00921000022545741" name="Mn55"/>
-      <nuclide ao="0.07049590265814457" name="Ni58"/>
-      <nuclide ao="0.027154895493108386" name="Ni60"/>
-      <nuclide ao="0.0011804045049057606" name="Ni61"/>
-      <nuclide ao="0.003763646085691717" name="Ni62"/>
-      <nuclide ao="0.0009584897006235392" name="Ni64"/>
-      <nuclide ao="0.007187754269156909" name="Cr50"/>
-      <nuclide ao="0.13860868641159682" name="Cr52"/>
-      <nuclide ao="0.015717112384639766" name="Cr53"/>
-      <nuclide ao="0.003912321943971482" name="Cr54"/>
-      <nuclide ao="0.0019342361432324083" name="Mo92"/>
-      <nuclide ao="0.00121304030636058" name="Mo94"/>
-      <nuclide ao="0.002095851614548981" name="Mo95"/>
-      <nuclide ao="0.0022014826415532765" name="Mo96"/>
-      <nuclide ao="0.0012651956259439516" name="Mo97"/>
-      <nuclide ao="0.003207486134985437" name="Mo98"/>
-      <nuclide ao="0.0012865859089123209" name="Mo100"/>
-      <nuclide ao="0.00022490234767912092" name="S32"/>
-      <nuclide ao="1.7716837924860544e-06" name="S33"/>
-      <nuclide ao="9.929299812250141e-06" name="S34"/>
-      <nuclide ao="3.450179606305236e-08" name="S36"/>
-      <nuclide ao="0.008305946861720388" name="Si28"/>
-      <nuclide ao="0.00042175228304960444" name="Si29"/>
-      <nuclide ao="0.00027802098970340904" name="Si30"/>
-      <nuclide ao="0.000359283862024318" name="P31"/>
-      <nuclide ao="0.004677587927049208" name="N14"/>
-      <nuclide ao="1.719699717744221e-05" name="N15"/>
-      <nuclide ao="0.03537511258841084" name="Fe54"/>
-      <nuclide ao="0.555313615130376" name="Fe56"/>
-      <nuclide ao="0.012824613100914038" name="Fe57"/>
-      <nuclide ao="0.0017067205731277763" name="Fe58"/>
-      <nuclide ao="0.057490189191685706" name="Cu63"/>
-      <nuclide ao="0.02564818997199572" name="Cu65"/>
-      <nuclide ao="0.002521538396927812" name="Ag107"/>
-      <nuclide ao="0.0023426341313381887" name="Ag109"/>
-      <nuclide ao="6.119643745306697e-06" name="Co59"/>
-      <nuclide ao="3.766544731339281e-09" name="W180"/>
-      <nuclide ao="8.317786281707581e-07" name="W182"/>
-      <nuclide ao="4.4916045921220934e-07" name="W183"/>
-      <nuclide ao="9.617244214019629e-07" name="W184"/>
-      <nuclide ao="8.923572225997979e-07" name="W186"/>
-      <nuclide ao="2.4778940016703742e-09" name="V50"/>
-      <nuclide ao="9.886797066664792e-07" name="V51"/>
-      <nuclide ao="3.6146990371371144e-05" name="Y89"/>
-      <nuclide ao="7.938363336072155e-08" name="Ba130"/>
-      <nuclide ao="7.216693941883777e-08" name="Ba132"/>
-      <nuclide ao="1.746439933935874e-06" name="Ba134"/>
-      <nuclide ao="4.75580130770141e-06" name="Ba135"/>
-      <nuclide ao="5.6651047443787665e-06" name="Ba136"/>
-      <nuclide ao="8.104347296735482e-06" name="Ba137"/>
-      <nuclide ao="5.1743695563306695e-05" name="Ba138"/>
-      <nuclide ao="0.00025315188420239497" name="O16"/>
-      <nuclide ao="9.598094088930475e-08" name="O17"/>
+      <density value="47.28784771098556" units="g/cm3"/>
+      <nuclide name="C0" ao="0.0007160567250306976"/>
+      <nuclide name="Mn55" ao="0.00921000022545741"/>
+      <nuclide name="Ni58" ao="0.07049590265814457"/>
+      <nuclide name="Ni60" ao="0.027154895493108386"/>
+      <nuclide name="Ni61" ao="0.0011804045049057606"/>
+      <nuclide name="Ni62" ao="0.003763646085691717"/>
+      <nuclide name="Ni64" ao="0.0009584897006235392"/>
+      <nuclide name="Cr50" ao="0.007187754269156909"/>
+      <nuclide name="Cr52" ao="0.13860868641159682"/>
+      <nuclide name="Cr53" ao="0.015717112384639766"/>
+      <nuclide name="Cr54" ao="0.003912321943971482"/>
+      <nuclide name="Mo92" ao="0.0019342361432324083"/>
+      <nuclide name="Mo94" ao="0.00121304030636058"/>
+      <nuclide name="Mo95" ao="0.002095851614548981"/>
+      <nuclide name="Mo96" ao="0.0022014826415532765"/>
+      <nuclide name="Mo97" ao="0.0012651956259439516"/>
+      <nuclide name="Mo98" ao="0.003207486134985437"/>
+      <nuclide name="Mo100" ao="0.0012865859089123209"/>
+      <nuclide name="S32" ao="0.00022490234767912092"/>
+      <nuclide name="S33" ao="1.7716837924860544e-06"/>
+      <nuclide name="S34" ao="9.929299812250141e-06"/>
+      <nuclide name="S36" ao="3.450179606305236e-08"/>
+      <nuclide name="Si28" ao="0.008305946861720388"/>
+      <nuclide name="Si29" ao="0.00042175228304960444"/>
+      <nuclide name="Si30" ao="0.00027802098970340904"/>
+      <nuclide name="P31" ao="0.000359283862024318"/>
+      <nuclide name="N14" ao="0.004677587927049208"/>
+      <nuclide name="N15" ao="1.719699717744221e-05"/>
+      <nuclide name="Fe54" ao="0.03537511258841084"/>
+      <nuclide name="Fe56" ao="0.555313615130376"/>
+      <nuclide name="Fe57" ao="0.012824613100914038"/>
+      <nuclide name="Fe58" ao="0.0017067205731277763"/>
+      <nuclide name="Cu63" ao="0.057490189191685706"/>
+      <nuclide name="Cu65" ao="0.02564818997199572"/>
+      <nuclide name="Ag107" ao="0.002521538396927812"/>
+      <nuclide name="Ag109" ao="0.0023426341313381887"/>
+      <nuclide name="Co59" ao="6.119643745306697e-06"/>
+      <nuclide name="W180" ao="3.766544731339281e-09"/>
+      <nuclide name="W182" ao="8.317786281707581e-07"/>
+      <nuclide name="W183" ao="4.4916045921220934e-07"/>
+      <nuclide name="W184" ao="9.617244214019629e-07"/>
+      <nuclide name="W186" ao="8.923572225997979e-07"/>
+      <nuclide name="V50" ao="2.4778940016703742e-09"/>
+      <nuclide name="V51" ao="9.886797066664792e-07"/>
+      <nuclide name="Y89" ao="3.6146990371371144e-05"/>
+      <nuclide name="Ba130" ao="7.938363336072155e-08"/>
+      <nuclide name="Ba132" ao="7.216693941883777e-08"/>
+      <nuclide name="Ba134" ao="1.746439933935874e-06"/>
+      <nuclide name="Ba135" ao="4.75580130770141e-06"/>
+      <nuclide name="Ba136" ao="5.6651047443787665e-06"/>
+      <nuclide name="Ba137" ao="8.104347296735482e-06"/>
+      <nuclide name="Ba138" ao="5.1743695563306695e-05"/>
+      <nuclide name="O16" ao="0.00025315188420239497"/>
+      <nuclide name="O17" ao="9.598094088930475e-08"/>
     </material>
     <material id="13" name="shield">
-      <density units="g/cm3" value="3.75"/>
-      <nuclide ao="0.0275" name="Ti46"/>
-      <nuclide ao="0.024799999999999996" name="Ti47"/>
-      <nuclide ao="0.2457333333333333" name="Ti48"/>
-      <nuclide ao="0.018033333333333332" name="Ti49"/>
-      <nuclide ao="0.017266666666666666" name="Ti50"/>
-      <nuclide ao="0.66656284" name="H1"/>
-      <nuclide ao="0.00010382666666666666" name="H2"/>
+      <density value="3.75" units="g/cm3"/>
+      <nuclide name="Ti46" ao="0.0275"/>
+      <nuclide name="Ti47" ao="0.024799999999999996"/>
+      <nuclide name="Ti48" ao="0.2457333333333333"/>
+      <nuclide name="Ti49" ao="0.018033333333333332"/>
+      <nuclide name="Ti50" ao="0.017266666666666666"/>
+      <nuclide name="H1" ao="0.66656284"/>
+      <nuclide name="H2" ao="0.00010382666666666666"/>
     </material>
     <material id="17" name="placeholder">
-      <density units="g/cm3" value="1e-12"/>
-      <nuclide ao="0.99984426" name="H1"/>
-      <nuclide ao="0.00015574" name="H2"/>
+      <density value="1e-12" units="g/cm3"/>
+      <nuclide name="H1" ao="0.99984426"/>
+      <nuclide name="H2" ao="0.00015574"/>
     </material>
   </materials>
   <geometry>
-    <cell fill="3" id="2" region="10000 -10001 10002 -10003 10004 -10005 2 -3" universe="4"/>
-    <cell fill="2" id="10000" region="10000 -10001 10002 -10003 10004 -10005" universe="3"/>
-    <dagmc_universe auto_geom_ids="true" filename="/opt/marathon/workspace/results/tokamak_with_tf_coils.h5m" id="2"/>
-    <surface boundary="reflective" coeffs="0 1 0 0" id="2" name="plane1" type="plane"/>
-    <surface boundary="reflective" coeffs="-0.9848380453369782 0.17347629364509756 0.0 0" id="3" name="plane2" type="plane"/>
-    <surface boundary="vacuum" coeffs="12.878103702983388" id="10000" type="x-plane"/>
-    <surface boundary="vacuum" coeffs="813.3449144346064" id="10001" type="x-plane"/>
-    <surface boundary="vacuum" coeffs="-1.0" id="10002" type="y-plane"/>
-    <surface boundary="vacuum" coeffs="801.0169049932132" id="10003" type="y-plane"/>
-    <surface boundary="vacuum" coeffs="-643.381623403677" id="10004" type="z-plane"/>
-    <surface boundary="vacuum" coeffs="642.9774911430685" id="10005" type="z-plane"/>
+    <cell id="6000" fill="2" region="-10000 7001 -7002" universe="3"/>
+    <cell id="10000" fill="5000" region="-10000" universe="2"/>
+    <dagmc_universe id="5000" filename="/opt/marathon/workspace/results/tokamak_with_tf_coils.h5m"/>
+    <surface id="7001" name="plane1" type="plane" boundary="reflective" coeffs="0 1 0 0"/>
+    <surface id="7002" name="plane2" type="plane" boundary="reflective" coeffs="-0.984807753012208 0.17364817766693041 0.0 0"/>
+    <surface id="10000" type="sphere" boundary="vacuum" coeffs="402.2475384647682 337.8206134349722 -0.16718024706528922 725.6899020123407"/>
   </geometry>
   <settings>
     <run_mode>fixed source</run_mode>
-    <particles>100</particles>
-    <batches>10</batches>
-    <source particle="neutron" strength="1.0" type="independent">
-      <space origin="0.0 0.0 0.0" type="cylindrical">
+    <particles>1000</particles>
+    <batches>5</batches>
+    <source type="independent" strength="1.0" particle="neutron">
+      <space type="cylindrical" origin="0.0 0.0 0.0">
         <r type="discrete">
           <parameters>430.0 1.0</parameters>
         </r>
-        <phi parameters="0 1.3964379345206632" type="uniform"/>
+        <phi type="uniform" parameters="0 1.3962634015954636"/>
         <z type="discrete">
           <parameters>0.0 1.0</parameters>
         </z>
@@ -204,24 +199,220 @@
     <output>
       <path>/opt/marathon/workspace/results</path>
     </output>
-    <photon_transport>true</photon_transport>
   </settings>
   <tallies>
-    <mesh id="1" type="spherical">
-      <r_grid>0.0 5.0 10.0 15.0 20.0 25.0 30.0 35.0 40.0 45.0 50.0 55.0 60.0 65.0 70.0 75.0 80.0 85.0 90.0 95.0 100.0 105.0 110.0 115.0 120.0 125.0 130.0 135.0 140.0 145.0 150.0 155.0 160.0 165.0 170.0 175.0 180.0 185.0 190.0 195.0 200.0 205.0 210.0 215.0 220.0 225.0 230.0 235.0 240.0 245.0 250.0 255.0 260.0 265.0 270.0 275.0 280.0 285.0 290.0 295.0 300.0 305.0 310.0 315.0 320.0 325.0 330.0 335.0 340.0 345.0 350.0 355.0 360.0 365.0 370.0 375.0 380.0 385.0 390.0 395.0 400.0 405.0 410.0 415.0 420.0 425.0 430.0 435.0 440.0 445.0 450.0 455.0 460.0 465.0 470.0 475.0 480.0 485.0 490.0 495.0 500.0 505.0 510.0 515.0 520.0 525.0 530.0 535.0 540.0 545.0 550.0 555.0 560.0 565.0 570.0 575.0 580.0 585.0 590.0 595.0 600.0 605.0 610.0 615.0 620.0 625.0 630.0 635.0 640.0 645.0 650.0 655.0 660.0 665.0 670.0 675.0 680.0 685.0 690.0 695.0 700.0 705.0 710.0 715.0 720.0 725.0 730.0 735.0 740.0 745.0</r_grid>
-      <theta_grid>0.0 0.03529879386055947 0.07059758772111895 0.10589638158167841 0.1411951754422379 0.17649396930279737 0.21179276316335682 0.2470915570239163 0.2823903508844758 0.31768914474503523 0.35298793860559474 0.3882867324661542 0.42358552632671365 0.45888432018727315 0.4941831140478326 0.5294819079083921 0.5647807017689516 0.600079495629511 0.6353782894900705 0.67067708335063 0.7059758772111895 0.7412746710717489 0.7765734649323084 0.8118722587928678 0.8471710526534273 0.8824698465139869 0.9177686403745463 0.9530674342351058 0.9883662280956652 1.0236650219562247 1.0589638158167842 1.0942626096773436 1.1295614035379031 1.1648601973984627 1.200158991259022 1.2354577851195816 1.270756578980141 1.3060553728407005 1.34135416670126 1.3766529605618194 1.411951754422379 1.4472505482829383 1.4825493421434979 1.5178481360040574 1.5531469298646168 1.5884457237251763 1.6237445175857357 1.6590433114462952 1.6943421053068546 1.7296408991674141 1.7649396930279737 1.800238486888533 1.8355372807490926 1.870836074609652 1.9061348684702115 1.941433662330771 1.9767324561913304 2.0120312500518898 2.0473300439124493 2.082628837773009 2.1179276316335685 2.153226425494128 2.188525219354687 2.2238240132152467 2.2591228070758063 2.294421600936366 2.3297203947969254 2.3650191886574845 2.400317982518044 2.4356167763786036 2.470915570239163 2.5062143640997228 2.541513157960282 2.5768119518208414 2.612110745681401 2.6474095395419606 2.68270833340252 2.7180071272630792 2.753305921123639 2.7886047149841984 2.823903508844758 2.8592023027053175 2.8945010965658766 2.929799890426436 2.9650986842869957 3.0003974781475553 3.035696272008115 3.070995065868674 3.1062938597292336 3.141592653589793</theta_grid>
-      <phi_grid>0.0 0.03580610088514521 0.07161220177029042 0.10741830265543562 0.14322440354058083 0.17903050442572604 0.21483660531087123 0.2506427061960165 0.28644880708116166 0.32225490796630685 0.3580610088514521 0.3938671097365973 0.42967321062174246 0.4654793115068877 0.501285412392033 0.5370915132771781 0.5728976141623233 0.6087037150474686 0.6445098159326137 0.6803159168177589 0.7161220177029042 0.7519281185880493 0.7877342194731946 0.8235403203583398 0.8593464212434849 0.8951525221286302 0.9309586230137754 0.9667647238989207 1.002570824784066 1.038376925669211 1.0741830265543562 1.1099891274395015 1.1457952283246466 1.1816013292097918 1.2174074300949371 1.2532135309800823 1.2890196318652274 1.3248257327503727 1.3606318336355179 1.3964379345206632</phi_grid>
-      <origin>0.0 0.0 0.0</origin>
-    </mesh>
-    <filter id="1" type="mesh">
+    <filter id="1" type="surface">
       <bins>1</bins>
     </filter>
     <filter id="2" type="particle">
       <bins>neutron</bins>
     </filter>
-    <tally id="1" name="Neutron flux in mesh">
+    <filter id="3" type="surface">
+      <bins>2</bins>
+    </filter>
+    <filter id="5" type="surface">
+      <bins>3</bins>
+    </filter>
+    <filter id="7" type="surface">
+      <bins>4</bins>
+    </filter>
+    <filter id="9" type="surface">
+      <bins>5</bins>
+    </filter>
+    <filter id="11" type="surface">
+      <bins>6</bins>
+    </filter>
+    <filter id="13" type="surface">
+      <bins>7</bins>
+    </filter>
+    <filter id="15" type="surface">
+      <bins>8</bins>
+    </filter>
+    <filter id="17" type="surface">
+      <bins>9</bins>
+    </filter>
+    <filter id="19" type="surface">
+      <bins>10</bins>
+    </filter>
+    <filter id="21" type="surface">
+      <bins>11</bins>
+    </filter>
+    <filter id="23" type="surface">
+      <bins>12</bins>
+    </filter>
+    <filter id="25" type="surface">
+      <bins>13</bins>
+    </filter>
+    <filter id="27" type="surface">
+      <bins>14</bins>
+    </filter>
+    <filter id="29" type="surface">
+      <bins>15</bins>
+    </filter>
+    <filter id="31" type="surface">
+      <bins>16</bins>
+    </filter>
+    <filter id="33" type="surface">
+      <bins>17</bins>
+    </filter>
+    <filter id="35" type="surface">
+      <bins>18</bins>
+    </filter>
+    <filter id="37" type="surface">
+      <bins>19</bins>
+    </filter>
+    <filter id="39" type="surface">
+      <bins>20</bins>
+    </filter>
+    <filter id="41" type="surface">
+      <bins>21</bins>
+    </filter>
+    <filter id="43" type="surface">
+      <bins>22</bins>
+    </filter>
+    <filter id="45" type="surface">
+      <bins>23</bins>
+    </filter>
+    <filter id="47" type="surface">
+      <bins>24</bins>
+    </filter>
+    <filter id="49" type="surface">
+      <bins>25</bins>
+    </filter>
+    <filter id="51" type="surface">
+      <bins>26</bins>
+    </filter>
+    <filter id="53" type="surface">
+      <bins>27</bins>
+    </filter>
+    <filter id="55" type="surface">
+      <bins>28</bins>
+    </filter>
+    <filter id="57" type="surface">
+      <bins>29</bins>
+    </filter>
+    <filter id="59" type="surface">
+      <bins>30</bins>
+    </filter>
+    <tally id="1" name="neutron current across surface 1">
       <filters>1 2</filters>
-      <scores>flux</scores>
+      <scores>current</scores>
+    </tally>
+    <tally id="2" name="neutron current across surface 2">
+      <filters>3 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="3" name="neutron current across surface 3">
+      <filters>5 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="4" name="neutron current across surface 4">
+      <filters>7 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="5" name="neutron current across surface 5">
+      <filters>9 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="6" name="neutron current across surface 6">
+      <filters>11 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="7" name="neutron current across surface 7">
+      <filters>13 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="8" name="neutron current across surface 8">
+      <filters>15 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="9" name="neutron current across surface 9">
+      <filters>17 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="10" name="neutron current across surface 10">
+      <filters>19 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="11" name="neutron current across surface 11">
+      <filters>21 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="12" name="neutron current across surface 12">
+      <filters>23 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="13" name="neutron current across surface 13">
+      <filters>25 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="14" name="neutron current across surface 14">
+      <filters>27 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="15" name="neutron current across surface 15">
+      <filters>29 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="16" name="neutron current across surface 16">
+      <filters>31 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="17" name="neutron current across surface 17">
+      <filters>33 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="18" name="neutron current across surface 18">
+      <filters>35 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="19" name="neutron current across surface 19">
+      <filters>37 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="20" name="neutron current across surface 20">
+      <filters>39 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="21" name="neutron current across surface 21">
+      <filters>41 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="22" name="neutron current across surface 22">
+      <filters>43 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="23" name="neutron current across surface 23">
+      <filters>45 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="24" name="neutron current across surface 24">
+      <filters>47 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="25" name="neutron current across surface 25">
+      <filters>49 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="26" name="neutron current across surface 26">
+      <filters>51 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="27" name="neutron current across surface 27">
+      <filters>53 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="28" name="neutron current across surface 28">
+      <filters>55 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="29" name="neutron current across surface 29">
+      <filters>57 2</filters>
+      <scores>current</scores>
+    </tally>
+    <tally id="30" name="neutron current across surface 30">
+      <filters>59 2</filters>
+      <scores>current</scores>
     </tally>
   </tallies>
 </model>

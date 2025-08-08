@@ -18,3 +18,5 @@ netCDF4
 gmsh
 meshio
 h5py
+scipy
+pydagmc

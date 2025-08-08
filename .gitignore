@@ -4,3 +4,6 @@ Code/workspace/results/
 __pycache__/
 *.pyc
 *.xml
+Code/workspace/summary.h5
+Code/workspace/model.xml
+*.h5
