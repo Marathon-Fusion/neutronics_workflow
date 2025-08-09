@@ -8,6 +8,7 @@ import cad_to_dagmc
 import gmsh
 from cad_to_dagmc import CadToDagmc
 import math
+import copy
 
 # Set results directory to workspace/results
 print(f"Current file path: {os.path.dirname(__file__)}")
@@ -124,9 +125,6 @@ def main():
 
     ##### EXPORT TO H5M #####
 
-    ids = cad_to_dagmc.get_ids_from_assembly(my_reactor)
-    print(f"IDs of assembly: {ids}")
-
     A = CadToDagmc()
     #very specific order of material tags, no touchy
     A.add_cadquery_object(my_reactor, material_tags=["tfcoil", #extra_cut_shape_1
@@ -146,8 +144,31 @@ def main():
                             scale_factor=1,
                             min_mesh_size=1,
                             max_mesh_size=10
-                            #set_size=set_size_dict,
                             )
+    
+    ##### DUPLICATE MAGNETS #####
+
+    ids = cad_to_dagmc.get_ids_from_assembly(my_reactor)
+    #print(f"IDs of assembly: {ids}")
+    for_removal = [assembly for i,assembly in enumerate(ids) if i != 0] #all but the magnet assembly scheduled for removal
+    print(f"For removal: {for_removal}")
+
+    for id in for_removal:
+        trimmed = my_reactor.remove(id.split("/")[-1]) #take only the assembly name after the slash
+        my_reactor = copy.copy(trimmed)
+
+    remaining_ids = cad_to_dagmc.get_ids_from_assembly(my_reactor)
+    print(f"Remaining IDs: {remaining_ids}")
+
+    B = CadToDagmc()
+    B.add_cadquery_object(my_reactor, material_tags=["placeholder"]) #geometry for meshing purposes, does not need a material
+
+    print("Created duplicate DAGMC magnet geometry...")
+
+    B.export_unstructured_mesh_file(filename=os.path.join(results_dir, "magnet_mesh.vtk"),
+                                    scale_factor=1,
+                                    min_mesh_size=1,
+                                    max_mesh_size=10) #same params as above, should generate the same object
 
 
 if __name__ == "__main__":
