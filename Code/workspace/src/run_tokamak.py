@@ -4,7 +4,7 @@ import openmc_source_plotter
 import os
 from tape_compositions import get_winding_material
 from build_tokamak_with_tf_coils import get_rotation_angle
-import pydagmc
+#import pydagmc
 
 print(f"Current file path: {os.path.dirname(__file__)}")
 results_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results'))
@@ -233,30 +233,30 @@ print("Constructed geometry")
 
 ##### GET SURFACE IDS FOR TF COILS #####
 
-materials_model = pydagmc.Model(geometry_h5m)
+# materials_model = pydagmc.Model(geometry_h5m)
 
-tf_vols = materials_model.find_volumes_by_material('tfcoil')
+# tf_vols = materials_model.find_volumes_by_material('tfcoil')
 
-#biglist is nested
-tf_surfaces_biglist = []
-for vol in tf_vols:
-    tf_surfaces_biglist.append(vol.surfaces)
+# #biglist is nested
+# tf_surfaces_biglist = []
+# for vol in tf_vols:
+#     tf_surfaces_biglist.append(vol.surfaces)
 
-#flattens list - more efficient ways to achieve this results but whatevs
-tf_surfaceobjs = []
-for parentvol in tf_surfaces_biglist:
-    for surface in parentvol:
-        tf_surfaceobjs.append(surface)
+# #flattens list - more efficient ways to achieve this results but whatevs
+# tf_surfaceobjs = []
+# for parentvol in tf_surfaces_biglist:
+#     for surface in parentvol:
+#         tf_surfaceobjs.append(surface)
 
-#print(f"TF coil volumes: {tf_vols}")
-#print(f"TF coil surfaces: {tf_surfaceobjs}")
+# #print(f"TF coil volumes: {tf_vols}")
+# #print(f"TF coil surfaces: {tf_surfaceobjs}")
 
-print(f"No. of TF coil volumes found: {len(tf_vols)}")
-print(f"No. of TF coil surfaces found: {len(tf_surfaceobjs)}")
+# print(f"No. of TF coil volumes found: {len(tf_vols)}")
+# print(f"No. of TF coil surfaces found: {len(tf_surfaceobjs)}")
 
 ##### TALLIES #####
 
-def surface_tallies_from_pydagmc(surface_id, particle="neutron", name=None):
+def surface_tally_from_pydagmc(surface_id, particle="neutron", name=None):
     """
     Returns an openmc.Tally object for current through a given surface
     for a specified particle type ('neutron' or 'photon').
@@ -354,7 +354,7 @@ def surface_current_from_mesh(meshfile, particle="neutron", name=None):
     surface_tally.filters = [surface_filter, p_filter]
     surface_tally.scores = ['current']
 
-    return surface_tally, name
+    return surface_tally
 
 def volumetric_flux_from_mesh(meshfile, particle="neutron", name=None):
     """
@@ -373,21 +373,23 @@ def volumetric_flux_from_mesh(meshfile, particle="neutron", name=None):
     flux_tally.filters = [mesh_filter, p_filter]
     flux_tally.scores = ['flux']
 
-    return flux_tally, name
+    return flux_tally
 
-flux_tally, flux_tally_name = volumetric_flux_from_mesh(meshfile="magnet_mesh.vtk")
-#surface_tally, surface_tally_name = surface_current_from_mesh(meshfile="dummy.1.h5")
+flux_tally = volumetric_flux_from_mesh(meshfile="magnet_mesh.vtk")
+#surface_tally = surface_current_from_mesh(meshfile="dummy.1.h5")
 
 tallies = openmc.Tallies()
-tallies.append(flux_tally)
+#tallies.append(flux_tally)
 #tallies.append(surface_tally)
+for i in range(30):
+    tallies.append(surface_tally_from_pydagmc(surface_id=i+1))
 
 for tally in tallies:
     print(f"Tally '{tally.name}' added")
 
 ##### SETTINGS #####
 
-batch_no = 100
+batch_no = 200
 particle_no = 100000
 
 settings = openmc.Settings()
@@ -468,4 +470,8 @@ def mesh_tally_to_vtk(particle="neutron", normalise=True):
     except Exception as e:
         print(f"No {particle} mesh flux tally found or export failed: {e}")
 
-mesh_tally_to_vtk("neutron", normalise=False)
+for i in range(30):
+    #print(f"Area of surface {i+1}: {get_area(i+1)}cm^2")
+    print(f"Current over surface {i+1}: {get_surface_current(surface_id=i+1, per_unit_area=False)}")
+
+#mesh_tally_to_vtk("neutron", normalise=False)
