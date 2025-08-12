@@ -4,7 +4,6 @@ import openmc_source_plotter
 import os
 from tape_compositions import get_winding_material
 from build_tokamak_with_tf_coils import get_rotation_angle
-import pydagmc
 
 print(f"Current file path: {os.path.dirname(__file__)}")
 results_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results'))
@@ -231,130 +230,7 @@ geometry = openmc.Geometry([border_cell])
 
 print("Constructed geometry")
 
-##### GET SURFACE IDS FOR TF COILS #####
-
-materials_model = pydagmc.Model(geometry_h5m)
-
-tf_vols = materials_model.find_volumes_by_material('tfcoil')
-
-#biglist is nested
-tf_surfaces_biglist = []
-for vol in tf_vols:
-    tf_surfaces_biglist.append(vol.surfaces)
-
-#flattens list - more efficient ways to achieve this results but whatevs
-tf_surfaceobjs = []
-for parentvol in tf_surfaces_biglist:
-    for surface in parentvol:
-        tf_surfaceobjs.append(surface)
-
-#print(f"TF coil volumes: {tf_vols}")
-#print(f"TF coil surfaces: {tf_surfaceobjs}")
-
-print(f"No. of TF coil volumes found: {len(tf_vols)}")
-print(f"No. of TF coil surfaces found: {len(tf_surfaceobjs)}")
-
 ##### TALLIES #####
-
-def surface_tallies_from_pydagmc(surface_id, particle="neutron", name=None):
-    """
-    Returns an openmc.Tally object for current through a given surface
-    for a specified particle type ('neutron' or 'photon').
-
-    Parameters:
-    -----------
-    surface_id : int
-        The surface ID corresponding to the surface that will be tallied over. Best found by pydagmc (open source) geometry interrogation, or Cubit (proprietary).
-    particle : str
-        The particle type to tally. Default is 'neutron'.
-    name : str (optional)
-        Name to give the tally. Defaults to '{particle} current across surface {surface_id}'.
-
-    Returns:
-    --------
-    openmc.Tally
-        Configured OpenMC surface tally for the requested particle.
-    """
-
-    surface_id = int(surface_id)
-
-    surface_filter = openmc.SurfaceFilter(bins=surface_id)
-    surface_filter.direction = 'both'
-    p_filter = openmc.ParticleFilter(particle)
-
-    if name is None:
-        name = f"{particle} current across surface {surface_id}"
-
-    surface_tally = openmc.Tally(name=name)
-    surface_tally.filters = [surface_filter, p_filter]
-    surface_tally.scores = ['current']
-
-    return surface_tally
-
-def volumetric_flux_tally_by_grid(particle="neutron", name=None):
-    """
-    Returns an openmc.Tally object for flux through each element of a mesh
-    for a specified particle type ('neutron' or 'photon').
-
-    Parameters:
-    -----------
-    particle : str
-        The type of particle to tally ('neutron' or 'photon').
-    name : str (optional)
-        Name to give the tally. Defaults to '{Particle} flux in mesh'.
-
-    Returns:
-    --------
-    openmc.Tally
-        Configured OpenMC mesh tally for the requested particle.
-    """
-    rgrid = np.arange(0, 945, 0.25)
-    phigrid = np.linspace(0, get_rotation_angle(deg=False), num=int(get_rotation_angle(deg=True)/2)) #2 degree steps
-    thetagrid = np.linspace(0, np.pi, 45) #4deg steps
-
-    mesh = openmc.SphericalMesh(r_grid=rgrid, 
-                                  phi_grid=phigrid,
-                                  theta_grid=thetagrid)
-    
-    print(f"No. of mesh tally cells = {np.prod(mesh.dimension)}")
-    mesh_filter = openmc.MeshFilter(mesh)
-    p_filter = openmc.ParticleFilter([particle])
-
-    if name is None:
-        name = f"{particle.capitalize()} flux in mesh"
-
-    mesh_tally = openmc.Tally(name=name)
-    mesh_tally.filters = [mesh_filter, p_filter]
-    mesh_tally.scores = ['flux']
-
-    return mesh_tally
-
-def surface_current_from_mesh(meshfile, particle="neutron", name=None):
-    """
-    Returns an openmc.Tally object for current over the surface of an input Unstructured Mesh"""
-
-    raise NotImplementedError("As of 11 Aug 2025 (time of writing), openmc does not yet support unstructured meshes as the input for MeshSurfaceFilter objects")
-
-    if name is None:
-        name = f"{particle} current over mesh surface"
-
-    dummy_sp = openmc.StatePoint(os.path.join(results_dir, meshfile))
-
-    dummy_tally_for_mesh = dummy_sp.get_tally(scores=['flux']) #flux filter is only one present in dummy file
-
-    dummy_mesh = dummy_tally_for_mesh.find_filter(openmc.MeshFilter).mesh
-
-    magnet_mesh = openmc.UnstructuredMesh(filename=os.path.join(results_dir, meshfile),
-                                          library='moab' #for .vtk (or .h5) files
-                                          )
-    surface_filter = openmc.MeshSurfaceFilter(dummy_mesh)
-    p_filter = openmc.ParticleFilter(particle)
-
-    surface_tally = openmc.Tally()
-    surface_tally.filters = [surface_filter, p_filter]
-    surface_tally.scores = ['current']
-
-    return surface_tally, name
 
 def volumetric_flux_from_mesh(meshfile, particle="neutron", name=None):
     """
@@ -375,23 +251,20 @@ def volumetric_flux_from_mesh(meshfile, particle="neutron", name=None):
 
     return flux_tally, name
 
-flux_tally, flux_tally_name = volumetric_flux_from_mesh(meshfile="magnet_mesh.vtk")
-#surface_tally, surface_tally_name = surface_current_from_mesh(meshfile="dummy.1.h5")
+flux_tally, tally_name = volumetric_flux_from_mesh(meshfile="magnet_mesh.vtk")
 
 tallies = openmc.Tallies()
+#tallies.append(surface_current_from_mesh(meshfile="magnet_mesh.h5m"))
 tallies.append(flux_tally)
-#tallies.append(surface_tally)
 
-for tally in tallies:
-    print(f"Tally '{tally.name}' added")
+print(f"Tally '{tally_name}' added")
 
 ##### SETTINGS #####
 
-batch_no = 100
-particle_no = 100000
+batch_no = 1
+particle_no = 10
 
 settings = openmc.Settings()
-#settings.photon_transport = True
 settings.source = [n_source]
 settings.batches = batch_no
 settings.particles = particle_no
@@ -403,69 +276,4 @@ model.run()
 
 print("Simulation finished")
 
-##### RESULTS #####
-
-reactor_power = 1.5e9 #1500MWth
-e_per_fusion = 17.6 * 1.6e-13 #17.6MeV
-n_per_s = reactor_power / e_per_fusion
-n_per_year = n_per_s * 60 * 60 * 24 * 365.25
-#dont need to multiply by slice proportion of whole reactor since only total neutrons is affected, not neutrons per unit area
-
-statepoint_path = os.path.join(results_dir, f"statepoint.{batch_no}.h5")
-results = openmc.StatePoint(statepoint_path)
-
-print("Found results")
-
-def get_area(surface_id):
-    surface = tf_surfaceobjs[surface_id-1] #e.g. surface id 1 corresponds to first entry of list
-    area = surface.area
-    return area
-
-def get_surface_current(surface_id, particle='neutron', per_unit_area=True):
-    tally_name = f"{particle} current across surface {surface_id}"
-    try:
-        surface_tally_results = results.get_tally(name=tally_name)
-        resultsdf = surface_tally_results.get_pandas_dataframe()
-        particle_sum = sum(resultsdf['mean'])
-        if per_unit_area == True:
-            print(f"{particle} current per unit area for surface {surface_id}: {particle_sum/get_area(surface_id)}")
-        else:
-            print(f"{particle} current for surface {surface_id}: {particle_sum}")
-    except Exception as e:
-        print(f"{e}")
-
-def mesh_tally_to_vtk(particle="neutron", normalise=True):
-    """
-    Export a mesh flux tally to VTK for the specified particle type.
-
-    Parameters
-    ----------
-    particle : str, optional
-        The type of particle mesh tally to export ('neutron' or 'photon').
-        Default is 'neutron'.
-    normalise : bool, optional
-        Whether or not to multiply current by the number of neutrons produced per year.
-        Default is False.
-
-    Notes
-    -----
-    Exports a VTK file named 'neutron_flux.vtk' or 'photon_flux.vtk'.
-    """
-
-    try:
-        mesh_tally_results = results.get_tally(scores=['flux'])
-        print("Got tally")
-        mesh = mesh_tally_results.find_filter(openmc.MeshFilter).mesh
-        print("Got mesh")
-        flux = mesh_tally_results.get_values(scores=['flux'], value='mean')
-        flux_1d = flux.squeeze() #need 1d array, not 3d
-        print("Got mean flux values")
-        if normalise == False:
-            flux *= n_per_year
-        vtk_filename = os.path.join(results_dir, f"{particle}_flux.vtk")
-        mesh.write_data_to_vtk(filename=vtk_filename, datasets={"mean": flux_1d})
-        print(f"Exported {particle} flux to {vtk_filename}")
-    except Exception as e:
-        print(f"No {particle} mesh flux tally found or export failed: {e}")
-
-mesh_tally_to_vtk("neutron", normalise=False)
+os.rename(os.path.join(results_dir, f"statepoint.{batch_no}.h5"), os.path.join(results_dir, f"dummy.{batch_no}.h5"))
