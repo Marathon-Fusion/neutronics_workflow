@@ -119,57 +119,98 @@ def main():
         )
     print("Built tokamak...")
 
-    filename = "reactor_with_tf_coils.step"
-    my_reactor.export(os.path.join(results_dir, filename))
-    print(f"Tokamak model saved as {filename}")
+    stepfilename = "reactor_with_tf_coils.step"
+    my_reactor.export(os.path.join(results_dir, stepfilename))
+    print(f"Tokamak model saved as {stepfilename} for easy viewing in CAD software...")
 
-    ##### EXPORT TO H5M #####
-
-    A = CadToDagmc()
-    #very specific order of material tags, no touchy
-    A.add_cadquery_object(my_reactor, material_tags=["tfcoil", #extra_cut_shape_1
-                                                    "placeholder", #layer_1
-                                                    "tungsten", #layer_2
-                                                    "vanadium_alloy", #layer_3
-                                                    "channel_mat", #layer_4
-                                                    "vanadium_alloy", #layer_5
-                                                    "blanket_mat", #layer_6
-                                                    "blanketouter", #layer_7
-                                                    "shield", #layer_8
-                                                    "placeholder"]) #plasma
+    ##### EXPORT GEOMETRY #####
     
-    print("Converted CadQuery assembly to DAGMC geometry...")
+    def export_tokamak_to_h5m(reactor,
+                              section='whole',
+                              export_vtk=False,
+                              scale_factor=1,
+                              min_mesh_size=1,
+                              max_mesh_size=10):
+        
+        reactor_copy = copy.copy(reactor)
+        print(f"Created copy of reactor geometry for section '{section}'...")
+        ids = cad_to_dagmc.get_ids_from_assembly(reactor_copy)
+        
+        for_removal = []
 
-    A.export_dagmc_h5m_file(filename=os.path.join(results_dir, f"tokamak_with_tf_coils.h5m"), 
-                            scale_factor=1,
-                            min_mesh_size=1,
-                            max_mesh_size=10
-                            )
-    
-    ##### DUPLICATE MAGNETS #####
+        #creating list of volumes for removal
+        if section=='whole':
+            filename_no_ending = "tokamak_with_tf_coils"
+            material_tags = ["tfcoil", #extra_cut_shape_1
+                            "placeholder", #layer_1
+                            "tungsten", #layer_2
+                            "vanadium_alloy", #layer_3
+                            "channel_mat", #layer_4
+                            "vanadium_alloy", #layer_5
+                            "blanket_mat", #layer_6
+                            "blanketouter", #layer_7
+                            "shield", #layer_8
+                            "placeholder"] #plasma
+        elif section=='onlyreactor':
+            filename_no_ending = "tokamak_reactor_only"
+            for i, assembly in enumerate(ids):
+                if i == 0 or i == 8: #first volume (magnet coils) or 9th volume (shield)
+                    for_removal.append(assembly)
+            material_tags = ["placeholder", #layer_1
+                            "tungsten", #layer_2
+                            "vanadium_alloy", #layer_3
+                            "channel_mat", #layer_4
+                            "vanadium_alloy", #layer_5
+                            "blanket_mat", #layer_6
+                            "blanketouter", #layer_7
+                            "placeholder"] #plasma
+        elif section=='shieldwithmagnets':
+            filename_no_ending = "tokamak_shield_and_magnets"
+            for i, assembly in enumerate(ids):
+                if i != 0 and i != 8: #not first volume (magnet coils) or 9th volume (shield)
+                    for_removal.append(assembly)
+            material_tags = ["tfcoil",
+                             "shield"]
+        elif section=='onlymagnets':
+            filename_no_ending = "tokamak_magnets_only"
+            for_removal = [assembly for i,assembly in enumerate(ids) if i != 0] #all but first volume
+            material_tags = ["tfcoil"]
+            
+        #remove condemned volumes
+        for id in for_removal:
+            id_to_remove = id.split("/")[-1] #only volume name, not hash string in front
+            trimmed_reactor = reactor_copy.remove(id_to_remove)
+            print(f"Removed volume {id_to_remove} from reactor copy...")
+            reactor_copy = copy.copy(trimmed_reactor)
 
-    ids = cad_to_dagmc.get_ids_from_assembly(my_reactor)
-    #print(f"IDs of assembly: {ids}")
-    for_removal = [assembly for i,assembly in enumerate(ids) if i != 0] #all but the magnet assembly scheduled for removal
-    print(f"For removal: {for_removal}")
+        remaining_volumes = cad_to_dagmc.get_ids_from_assembly(reactor_copy)
 
-    for id in for_removal:
-        trimmed = my_reactor.remove(id.split("/")[-1]) #take only the assembly name after the slash
-        my_reactor = copy.copy(trimmed)
+        filename = f"{filename_no_ending}.h5m"
+        filepath = os.path.join(results_dir, filename)
 
-    remaining_ids = cad_to_dagmc.get_ids_from_assembly(my_reactor)
-    print(f"Remaining IDs: {remaining_ids}")
+        A = CadToDagmc()
+        A.add_cadquery_object(reactor_copy,
+                              material_tags=material_tags
+                              )
+        
+        print("Created DAGMC geometry from CadQuery assembly of trimmed reactor model...")
 
-    B = CadToDagmc()
-    B.add_cadquery_object(my_reactor, material_tags=["placeholder"]) #geometry for meshing purposes, does not need a material
+        A.export_dagmc_h5m_file(filename=filepath,
+                                scale_factor=scale_factor,
+                                min_mesh_size=min_mesh_size,
+                                max_mesh_size=max_mesh_size)
 
-    print("Created duplicate DAGMC magnet geometry...")
+        if export_vtk == True:
+            print("Exporting .vtk mesh of trimmed reactor model...")
+            vtk_filename = f"{filename_no_ending}.vtk"
+            vtk_filepath = os.path.join(results_dir, vtk_filename)
+            A.export_unstructured_mesh_file(filename=vtk_filepath,
+                                    scale_factor=scale_factor,
+                                    min_mesh_size=min_mesh_size,
+                                    max_mesh_size=max_mesh_size)
 
-    B.export_unstructured_mesh_file(filename=os.path.join(results_dir, "magnet_mesh.vtk"),
-                                    scale_factor=1,
-                                    min_mesh_size=1,
-                                    max_mesh_size=10) #same params as above, should generate the same object
-
+    export_tokamak_to_h5m(my_reactor, section='onlyreactor')
+    export_tokamak_to_h5m(my_reactor, section='shieldwithmagnets')
 
 if __name__ == "__main__":
     main()

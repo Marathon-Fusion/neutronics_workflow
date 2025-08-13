@@ -11,7 +11,14 @@ results_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'res
 print(f"Results directory location: {results_dir}")
 os.makedirs(results_dir, exist_ok=True)
 
-geometry_h5m = os.path.join(results_dir, "tokamak_with_tf_coils.h5m")
+run_mode = 'shieldingonly' #'shieldingonly' or 'fullsim' are the options
+
+if run_mode == 'fullsim':
+    geometry_h5m = os.path.join(results_dir, "tokamak_with_tf_coils.h5m")
+elif run_mode == 'shieldingonly':
+    geometry_h5m = os.path.join(results_dir, "tokamak_shield_and_magnets.h5m")
+
+print(f"Using geometry file {geometry_h5m} for run mode '{run_mode}")
 
 ##### MATERIALS DEFINITION #####
 
@@ -149,9 +156,13 @@ def make_ring_source(r, plot=False):
         z = openmc.stats.Discrete([0], [1.0])
     )
     n_source.angle = openmc.stats.Isotropic()
-    n_source.energy = openmc.stats.Discrete([14.1e6], [1.0]) #14.1MeV neutrons only
 
-    print(f"Neutron ring source created, radius {r}cm")
+    if run_mode == 'fullsim':
+        n_source.energy = openmc.stats.Discrete([14.1e6], [1.0]) #14.1MeV neutrons only
+    elif run_mode == 'shieldingonly':
+        n_source.energy = openmc.stats.PowerLaw(a=0.02, b=14.5e6, n=0.12) #energy^0.12 between 0.02 eV and 14.5 MeV
+
+    print(f"Neutron ring source created, radius {r}cm, for run mode '{run_mode}'")
 
     #plot source as sanity check
     if plot == True:
@@ -255,6 +266,34 @@ print("Constructed geometry")
 # print(f"No. of TF coil surfaces found: {len(tf_surfaceobjs)}")
 
 ##### TALLIES #####
+
+def bounding_cell_surface_tally(particle='neutron', name=None):
+    """Takes a cell and particle as input and returns a tally of energy-binned particles over that cell's surface"""
+
+    if name is None:
+        name = f"{particle} leakage by energy bin"
+    
+    cell_surfaces_dict = bounded_dag_univ.cells[10000].region.get_surfaces()
+    cell_surface = [surface for surface in cell_surfaces_dict.values()][0] #should only contain one surface, so accessing it like this is fine
+
+    surface_filter = openmc.SurfaceFilter(cell_surface)
+
+    p_filter = openmc.ParticleFilter(particle)
+
+    low_energy = 0.02 #eV, roughly thermal
+    high_energy = 14.5e6 #eV, just above maximum energy
+
+    e_start = np.log10(low_energy)
+    e_stop = np.log10(high_energy)
+
+    e_filter = openmc.EnergyFilter(np.logspace(start=e_start, stop=e_stop, num=50))
+
+    surface_tally = openmc.Tally()
+    surface_tally.filters = [surface_filter, p_filter, e_filter]
+    surface_tally.scores = ['current']
+    surface_tally.name = name
+
+    return surface_tally
 
 def surface_tally_from_pydagmc(surface_id, particle="neutron", name=None):
     """
@@ -372,6 +411,7 @@ def volumetric_flux_from_mesh(meshfile, particle="neutron", name=None):
     flux_tally = openmc.Tally()
     flux_tally.filters = [mesh_filter, p_filter]
     flux_tally.scores = ['flux']
+    flux_tally.name = name
 
     return flux_tally
 
@@ -379,18 +419,19 @@ flux_tally = volumetric_flux_from_mesh(meshfile="magnet_mesh.vtk")
 #surface_tally = surface_current_from_mesh(meshfile="dummy.1.h5")
 
 tallies = openmc.Tallies()
-#tallies.append(flux_tally)
-#tallies.append(surface_tally)
+tallies.append(flux_tally)
+# tallies.append(surface_tally)
 for i in range(30):
     tallies.append(surface_tally_from_pydagmc(surface_id=i+1))
+#tallies.append(bounding_cell_surface_tally())
 
 for tally in tallies:
     print(f"Tally '{tally.name}' added")
 
 ##### SETTINGS #####
 
-batch_no = 200
-particle_no = 100000
+batch_no = 25
+particle_no = 1000000
 
 settings = openmc.Settings()
 #settings.photon_transport = True
@@ -423,12 +464,14 @@ def get_area(surface_id):
     area = surface.area
     return area
 
-def get_surface_current(surface_id, particle='neutron', per_unit_area=True):
+def get_surface_current(surface_id, particle='neutron', per_unit_area=True, normalise=True):
     tally_name = f"{particle} current across surface {surface_id}"
     try:
         surface_tally_results = results.get_tally(name=tally_name)
         resultsdf = surface_tally_results.get_pandas_dataframe()
         particle_sum = sum(resultsdf['mean'])
+        if normalise == False:
+            particle_sum *= n_per_year
         if per_unit_area == True:
             print(f"{particle} current per unit area for surface {surface_id}: {particle_sum/get_area(surface_id)}")
         else:
@@ -472,6 +515,6 @@ def mesh_tally_to_vtk(particle="neutron", normalise=True):
 
 for i in range(30):
     #print(f"Area of surface {i+1}: {get_area(i+1)}cm^2")
-    print(f"Current over surface {i+1}: {get_surface_current(surface_id=i+1, per_unit_area=False)}")
+    print(f"{get_surface_current(surface_id=i+1, per_unit_area=False)}")
 
-#mesh_tally_to_vtk("neutron", normalise=False)
+mesh_tally_to_vtk("neutron")
