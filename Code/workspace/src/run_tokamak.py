@@ -139,7 +139,7 @@ placeholder.add_element("H", 1.0)
 placeholder.set_density('g/cm3', 1e-12) #effectively 0
 
 #full list for sim
-materials_list = [tungsten, vanadium_alloy, channel_mat, blanket_mat, ti_hydride, placeholder, tf_coil_mat, eurofer97_steel]
+materials_list = [tungsten, vanadium_alloy, channel_mat, blanket_mat, WC, placeholder, tf_coil_mat, eurofer97_steel]
 
 def get_materials(materials_list):
     return openmc.Materials(materials_list)
@@ -430,8 +430,8 @@ for tally in tallies:
 
 ##### SETTINGS #####
 
-batch_no = 25
-particle_no = 1000000
+batch_no = 100
+particle_no = 100000
 
 settings = openmc.Settings()
 #settings.photon_transport = True
