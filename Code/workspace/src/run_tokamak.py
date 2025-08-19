@@ -4,21 +4,40 @@ import openmc_source_plotter
 import os
 from tape_compositions import get_winding_material
 from build_tokamak_with_tf_coils import get_rotation_angle
-#import pydagmc
+import pydagmc
 
 print(f"Current file path: {os.path.dirname(__file__)}")
 results_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results'))
 print(f"Results directory location: {results_dir}")
 os.makedirs(results_dir, exist_ok=True)
 
-run_mode = 'shieldingonly' #'shieldingonly' or 'fullsim' are the options
+##### RUN INPUTS ##### (needs improvement, lots of settings still distributed all over the code)
 
-if run_mode == 'fullsim':
-    geometry_h5m = os.path.join(results_dir, "tokamak_with_tf_coils.h5m")
-elif run_mode == 'shieldingonly':
-    geometry_h5m = os.path.join(results_dir, "tokamak_shield_and_magnets.h5m")
+geometry_mode = 'shieldingonly' #'shieldingonly' or 'reactoronly or 'fullsim' are the options
+damage_speed = 'fastonly' #'fastonly' means only <0.1MeV neutrons will be tracked by magnet surface neutron tallies, useful for assessing magnet damage
+what_to_tally = ['neutrondamage', 'heating'] #'neutrondamage' or 'heating'
+source_energy = 'leakage' #'leakage' or 'mono'
+photons = True #include photon transport or no
 
-print(f"Using geometry file {geometry_h5m} for run mode '{run_mode}")
+batch_no = 20
+particle_no = 100000
+
+##### GEOMETRY FILE #####
+
+if geometry_mode == 'fullsim':
+    geom_h5m_filename = "tokamak_with_tf_coils.h5m"
+elif geometry_mode == 'shieldingonly':
+    geom_h5m_filename = "tokamak_shield_and_magnets.h5m"
+elif geometry_mode == 'reactoronly':
+    geom_h5m_filename = "tokamak_reactor_only.h5m"
+else:
+    raise ValueError("Invalid run mode specified. Run mode must be of type 'fullsim', 'reactoronly', or 'shieldingonly'.")
+
+geometry_h5m = os.path.join(results_dir, geom_h5m_filename)
+
+print(f"Using geometry file {geometry_h5m} for run mode '{geometry_mode}'")
+
+plasma_centre_position = 421 #centre of plasma layer
 
 ##### MATERIALS DEFINITION #####
 
@@ -107,7 +126,7 @@ for symbol, wt_frac in eurofer97_steel_comp_list:
 # Make the remaining composition iron 
 remaining_percent = 1.0 - subtotal
 if remaining_percent < 0:
-    raise ValueError(f"Alloy fractions sum to {subtotal:.5f} > 1.0!")
+    raise ValueError(f"Steel alloy fractions sum to {subtotal:.5f} > 1.0!")
 eurofer97_steel.add_element("Fe", remaining_percent, 'wo')
 eurofer97_steel.temperature = 900.0
 
@@ -132,14 +151,36 @@ WC = openmc.Material(name='shield')
 WC.add_elements_from_formula("WC")
 WC.set_density('g/cm3', 15.63)
 
+Pb = openmc.Material(name='shield')
+Pb.add_elements_from_formula("Pb")
+Pb.set_density('g/cm3', 11.34)
+
+Ni = openmc.Material()
+Ni.add_element("Ni", 1.0)
+Ni.set_density('g/cm3', 8.9)
+
+hf_hydride = openmc.Material()
+hf_hydride.add_elements_from_formula("HfH2")
+hf_hydride.set_density('g/cm3', 11.4)
+
+nickel_haf = openmc.Material.mix_materials(materials=[Ni, hf_hydride],
+                                           fracs=[0.6, 0.4],
+                                           percent_type='vo',
+                                           name='shield')
+
+wc_haf = openmc.Material.mix_materials(materials=[WC, hf_hydride],
+                                       fracs=[0.6, 0.4],
+                                       percent_type='vo',
+                                       name='shield')
+
 #placeholder - effectively vacuum
 
 placeholder = openmc.Material(name='placeholder')
 placeholder.add_element("H", 1.0)
-placeholder.set_density('g/cm3', 1e-12) #effectively 0
+placeholder.set_density('g/cm3', 1e-12) #chosen arbitrarily but effectively 0
 
 #full list for sim
-materials_list = [tungsten, vanadium_alloy, channel_mat, blanket_mat, WC, placeholder, tf_coil_mat, eurofer97_steel]
+materials_list = [tungsten, vanadium_alloy, channel_mat, blanket_mat, wc_haf, placeholder, tf_coil_mat, eurofer97_steel]
 
 def get_materials(materials_list):
     return openmc.Materials(materials_list)
@@ -148,7 +189,7 @@ materials = get_materials(materials_list)
 
 ##### NEUTRON SOURCE #####
 
-def make_ring_source(r, plot=False):
+def make_n_ring_source(r, energy='mono', plot=False):
     n_source = openmc.IndependentSource()
     n_source.space = openmc.stats.CylindricalIndependent(
         r = openmc.stats.Discrete([r], [1.0]),
@@ -157,12 +198,14 @@ def make_ring_source(r, plot=False):
     )
     n_source.angle = openmc.stats.Isotropic()
 
-    if run_mode == 'fullsim':
+    if energy == 'leakage':
+        n_source.energy = openmc.stats.PowerLaw(a=1e3, b=14.5e6, n=0.15) #energy^0.15 between 1 keV and 14.5 MeV
+        print(f"Leakage energy neutron ring source created, radius {r}cm, for run mode '{geometry_mode}'")
+    elif energy == 'mono':
         n_source.energy = openmc.stats.Discrete([14.1e6], [1.0]) #14.1MeV neutrons only
-    elif run_mode == 'shieldingonly':
-        n_source.energy = openmc.stats.PowerLaw(a=0.02, b=14.5e6, n=0.12) #energy^0.12 between 0.02 eV and 14.5 MeV
-
-    print(f"Neutron ring source created, radius {r}cm, for run mode '{run_mode}'")
+        print(f"Monoenergetic neutron ring source created, radius {r}cm, for run mode '{geometry_mode}'")
+    else:
+        raise ValueError("Energy spectrum for source must be either 'mono' or 'leakage'")
 
     #plot source as sanity check
     if plot == True:
@@ -173,7 +216,32 @@ def make_ring_source(r, plot=False):
     
     return n_source
 
-n_source = make_ring_source(r=210+440/2, plot=True) #r is inner reactor edge + half reactor thickness
+def make_photon_ring_source(r):
+    p_source = openmc.IndependentSource()
+    p_source.space = openmc.stats.CylindricalIndependent(
+        r = openmc.stats.Discrete([r], [1.0]),
+        phi = openmc.stats.Uniform(a=0, b=get_rotation_angle(deg=False)),
+        z = openmc.stats.Discrete([0], [1.0])
+    )
+    p_source.angle = openmc.stats.Isotropic()
+    p_source.particle = 'photon'
+    p_source.energy = openmc.stats.Discrete([2e5, 1e6, 3e6], [0.25, 0.5, 0.25])
+
+    return p_source
+
+n_source = make_n_ring_source(r=plasma_centre_position, energy=source_energy, plot=True) #r is inner reactor edge + half reactor thickness
+if source_energy == 'leakage':
+    p_leakage = 0.00079
+    n_leakage = 0.00074 #both from 'reactoronly' geometry modes, tallying leakage into the shielding layer. no touchy
+    total_leakage = p_leakage + n_leakage
+
+    p_strength = p_leakage/total_leakage
+    n_strength = n_leakage/total_leakage
+
+    p_source = make_photon_ring_source(r=plasma_centre_position)
+    
+    p_source.strength = p_strength
+    n_source.strength = n_strength
 
 ##### REFLECTIVE PLANES #####
 
@@ -219,9 +287,6 @@ plane2 = openmc.Plane(
     surface_id=7002
 )
 
-# print(f"Plane 1 norm: {plane1_norm}")
-# print(f"Plane 2 norm: {plane2_norm}")
-
 ##### BUILD GEOMETRY #####
 
 dagmc_universe = openmc.DAGMCUniverse(filename=geometry_h5m, auto_geom_ids = False, universe_id = 5000)
@@ -244,31 +309,32 @@ print("Constructed geometry")
 
 ##### GET SURFACE IDS FOR TF COILS #####
 
-# materials_model = pydagmc.Model(geometry_h5m)
+if geometry_mode != 'reactoronly' and 'neutrondamage' in what_to_tally:
+    materials_model = pydagmc.Model(geometry_h5m)
 
-# tf_vols = materials_model.find_volumes_by_material('tfcoil')
+    tf_vols = materials_model.find_volumes_by_material('tfcoil')
 
-# #biglist is nested
-# tf_surfaces_biglist = []
-# for vol in tf_vols:
-#     tf_surfaces_biglist.append(vol.surfaces)
+    #biglist is nested
+    tf_surfaces_biglist = []
+    for vol in tf_vols:
+        tf_surfaces_biglist.append(vol.surfaces)
 
-# #flattens list - more efficient ways to achieve this results but whatevs
-# tf_surfaceobjs = []
-# for parentvol in tf_surfaces_biglist:
-#     for surface in parentvol:
-#         tf_surfaceobjs.append(surface)
+    #flattens list - more efficient ways to achieve this results but whatevs
+    tf_surfaceobjs = []
+    for parentvol in tf_surfaces_biglist:
+        for surface in parentvol:
+            tf_surfaceobjs.append(surface)
 
-# #print(f"TF coil volumes: {tf_vols}")
-# #print(f"TF coil surfaces: {tf_surfaceobjs}")
+    #print(f"TF coil volumes: {tf_vols}")
+    #print(f"TF coil surfaces: {tf_surfaceobjs}")
 
-# print(f"No. of TF coil volumes found: {len(tf_vols)}")
-# print(f"No. of TF coil surfaces found: {len(tf_surfaceobjs)}")
+    print(f"No. of TF coil volumes found: {len(tf_vols)}")
+    print(f"No. of TF coil surfaces found: {len(tf_surfaceobjs)}")
 
 ##### TALLIES #####
 
 def bounding_cell_surface_tally(particle='neutron', name=None):
-    """Takes a cell and particle as input and returns a tally of energy-binned particles over that cell's surface"""
+    """Returns a tally of energy-binned particles over the surface of the cell bounding the geometry"""
 
     if name is None:
         name = f"{particle} leakage by energy bin"
@@ -295,12 +361,12 @@ def bounding_cell_surface_tally(particle='neutron', name=None):
 
     return surface_tally
 
-def surface_tally_from_pydagmc(surface_id, particle="neutron", name=None):
+def surface_tally_from_pydagmc(surface_id, particle="neutron", damage_speed=damage_speed, name=None):
     """
     Returns an openmc.Tally object for current through a given surface
     for a specified particle type ('neutron' or 'photon').
 
-    Parameters:
+    Params:
     -----------
     surface_id : int
         The surface ID corresponding to the surface that will be tallied over. Best found by pydagmc (open source) geometry interrogation, or Cubit (proprietary).
@@ -321,12 +387,18 @@ def surface_tally_from_pydagmc(surface_id, particle="neutron", name=None):
     surface_filter.direction = 'both'
     p_filter = openmc.ParticleFilter(particle)
 
+    fast_e_filter = openmc.EnergyFilter([0.02, 1e5, 14.5e6]) #bins between slow (thermal - 0.1MeV) and fast (0.1MeV-14.5MeV)
+
     if name is None:
         name = f"{particle} current across surface {surface_id}"
 
-    surface_tally = openmc.Tally(name=name)
+    surface_tally = openmc.Tally()
     surface_tally.filters = [surface_filter, p_filter]
+    if particle=='neutron':
+        if damage_speed=='fastonly':
+            surface_tally.filters.append(fast_e_filter)
     surface_tally.scores = ['current']
+    surface_tally.name = name
 
     return surface_tally
 
@@ -399,14 +471,22 @@ def volumetric_flux_from_mesh(meshfile, particle="neutron", name=None):
     """
     Returns an openmc.Tally object for flux in an input Unstructured Mesh (in .vtk format)"""
 
+
     if name is None:
-        name = f"{particle} flux over mesh surface"
+        if particle=='both':
+            name = f"neutron and photon flux over mesh surface"
+        else:
+            name = f"{particle} flux over mesh surface"
 
     magnet_mesh = openmc.UnstructuredMesh(filename=os.path.join(results_dir, meshfile),
                                           library='moab' #for .vtk (or .h5) files
                                           )
     mesh_filter = openmc.MeshFilter(magnet_mesh)
-    p_filter = openmc.ParticleFilter(particle)
+
+    if particle=='both':
+        p_filter = openmc.ParticleFilter(['neutron', 'photon'])
+    else:
+        p_filter = openmc.ParticleFilter(particle)
 
     flux_tally = openmc.Tally()
     flux_tally.filters = [mesh_filter, p_filter]
@@ -415,27 +495,45 @@ def volumetric_flux_from_mesh(meshfile, particle="neutron", name=None):
 
     return flux_tally
 
-flux_tally = volumetric_flux_from_mesh(meshfile="magnet_mesh.vtk")
-#surface_tally = surface_current_from_mesh(meshfile="dummy.1.h5")
+def heating_in_magnets(name=None):
+
+    if name == None:
+        name = f"Heating in magnet material"
+
+    m_filter = openmc.MaterialFilter(tf_coil_mat)
+
+    heating_tally = openmc.Tally()
+    heating_tally.name = name
+    heating_tally.filters = [m_filter]
+    heating_tally.scores = ['heating']
+
+    return heating_tally
 
 tallies = openmc.Tallies()
-tallies.append(flux_tally)
-# tallies.append(surface_tally)
-for i in range(30):
-    tallies.append(surface_tally_from_pydagmc(surface_id=i+1))
-#tallies.append(bounding_cell_surface_tally())
+#tally leakage energy spectra if only running reactor
+if geometry_mode == 'reactoronly':
+    tallies.append(bounding_cell_surface_tally(particle='neutron'))
+    tallies.append(bounding_cell_surface_tally(particle='photon'))
+else:
+    #tally volumetric flux and surface currents
+    if 'neutrondamage' in what_to_tally:
+        tallies.append(volumetric_flux_from_mesh(meshfile="magnet_mesh.vtk", particle='both'))
+        for i in range(len(tf_surfaceobjs)):
+            tallies.append(surface_tally_from_pydagmc(surface_id=i+1))
+    #tally heating in magnet material
+    if 'heating' in what_to_tally:
+        tallies.append(heating_in_magnets())
 
 for tally in tallies:
     print(f"Tally '{tally.name}' added")
 
 ##### SETTINGS #####
-
-batch_no = 100
-particle_no = 100000
-
 settings = openmc.Settings()
-#settings.photon_transport = True
 settings.source = [n_source]
+if photons == True:
+    settings.photon_transport = True
+    if source_energy == 'leakage':
+        settings.source.append(p_source)
 settings.batches = batch_no
 settings.particles = particle_no
 settings.run_mode = 'fixed source'
@@ -457,6 +555,14 @@ n_per_year = n_per_s * 60 * 60 * 24 * 365.25
 statepoint_path = os.path.join(results_dir, f"statepoint.{batch_no}.h5")
 results = openmc.StatePoint(statepoint_path)
 
+if photons == True:
+    p_leakage = 0.00079
+n_leakage = 0.00074 #both from 'reactoronly' geometry modes, tallying leakage into the shielding layer. no touchy
+total_leakage = p_leakage + n_leakage
+
+p_strength = p_leakage/total_leakage
+n_strength = n_leakage/total_leakage
+
 print("Found results")
 
 def get_area(surface_id):
@@ -469,13 +575,28 @@ def get_surface_current(surface_id, particle='neutron', per_unit_area=True, norm
     try:
         surface_tally_results = results.get_tally(name=tally_name)
         resultsdf = surface_tally_results.get_pandas_dataframe()
-        particle_sum = sum(resultsdf['mean'])
-        if normalise == False:
+
+        if damage_speed == 'fastonly':
+            fastrow = resultsdf.iloc[1] #2nd row, should be higher energy neutrons
+            particle_sum = fastrow['mean']
+            particle_sum_sd = fastrow['std. dev.']
+        else:
+            particle_sum = sum(resultsdf['mean'])
+            particle_sum_sd = sum(resultsdf['std. dev.'])
+        particle_sum /= n_strength #per source neutron instead of per source particle
+        particle_sum_sd /= n_strength
+        sd_mean_ratio = particle_sum_sd/particle_sum
+        if sd_mean_ratio > 0.05:
+            print(f"WARNING: Standard deviation for mean {particle} current over surface {surface_id} = {sd_mean_ratio*100}% of mean value")
+
+        if particle == 'neutron' and normalise == False:
             particle_sum *= n_per_year
+
         if per_unit_area == True:
-            print(f"{particle} current per unit area for surface {surface_id}: {particle_sum/get_area(surface_id)}")
+            print(f"{particle} current per cm^2 for surface {surface_id}: {particle_sum/get_area(surface_id)}")
         else:
             print(f"{particle} current for surface {surface_id}: {particle_sum}")
+
     except Exception as e:
         print(f"{e}")
 
@@ -507,14 +628,14 @@ def mesh_tally_to_vtk(particle="neutron", normalise=True):
         print("Got mean flux values")
         if normalise == False:
             flux *= n_per_year
+        flux /= n_strength #per source neutron, not per source particle
         vtk_filename = os.path.join(results_dir, f"{particle}_flux.vtk")
         mesh.write_data_to_vtk(filename=vtk_filename, datasets={"mean": flux_1d})
         print(f"Exported {particle} flux to {vtk_filename}")
     except Exception as e:
         print(f"No {particle} mesh flux tally found or export failed: {e}")
 
-for i in range(30):
-    #print(f"Area of surface {i+1}: {get_area(i+1)}cm^2")
-    print(f"{get_surface_current(surface_id=i+1, per_unit_area=False)}")
-
-mesh_tally_to_vtk("neutron")
+if geometry_mode != 'reactoronly' and 'neutrondamage' in what_to_tally:
+    for i in range(len(tf_surfaceobjs)):
+        #print(f"Area of surface {i+1}: {get_area(i+1)}cm^2")
+        get_surface_current(surface_id=i+1, per_unit_area=True)
