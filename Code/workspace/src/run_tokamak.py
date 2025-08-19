@@ -180,7 +180,7 @@ placeholder.add_element("H", 1.0)
 placeholder.set_density('g/cm3', 1e-12) #chosen arbitrarily but effectively 0
 
 #full list for sim
-materials_list = [tungsten, vanadium_alloy, channel_mat, blanket_mat, wc_haf, placeholder, tf_coil_mat, eurofer97_steel]
+materials_list = [tungsten, vanadium_alloy, channel_mat, blanket_mat, ti_hydride, placeholder, tf_coil_mat, eurofer97_steel]
 
 def get_materials(materials_list):
     return openmc.Materials(materials_list)
