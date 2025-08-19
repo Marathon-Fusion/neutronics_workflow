@@ -68,6 +68,7 @@ stainless = openmc.Material(name='Stainless 316LN')
 for (element, wtfrac) in stainless_comp:
     stainless.add_element(element, wtfrac, percent_type='wo')
 stainless.add_element("Fe", remaining_fe_frac, percent_type='wo')
+stainless.set_density('g/cm3', 7.8)
 
 def winding_pack(name):
     return openmc.Material.mix_materials(
@@ -78,6 +79,16 @@ def winding_pack(name):
 )
 
 
-def get_winding_material(name):
+def get_winding_material(name='tfcoil'):
     """Returns an openmc.Material object of the average composition of a TF coil winding pack according to ARC 2015"""
     return winding_pack(name)
+
+if __name__ == "__main__":
+    print("Stainless:")
+    print(f"Density: {stainless.density}")
+    print("Copper:")
+    print(f"Density: {Cu.density}")
+    print("HTS tape:")
+    print(f"Density: {hts_tape.density}")
+    print("Overall:")
+    print(f"Density: {get_winding_material().density}")

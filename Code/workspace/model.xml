@@ -153,17 +153,14 @@
       <nuclide name="O16" ao="0.00025315188420239497"/>
       <nuclide name="O17" ao="9.598094088930475e-08"/>
     </material>
-    <material id="13" name="shield">
-      <density value="3.75" units="g/cm3"/>
-      <nuclide name="Ti46" ao="0.0275"/>
-      <nuclide name="Ti47" ao="0.024799999999999996"/>
-      <nuclide name="Ti48" ao="0.2457333333333333"/>
-      <nuclide name="Ti49" ao="0.018033333333333332"/>
-      <nuclide name="Ti50" ao="0.017266666666666666"/>
-      <nuclide name="H1" ao="0.66656284"/>
-      <nuclide name="H2" ao="0.00010382666666666666"/>
+    <material id="17" name="shield">
+      <density value="11.34" units="g/cm3"/>
+      <nuclide name="Pb204" ao="0.014"/>
+      <nuclide name="Pb206" ao="0.241"/>
+      <nuclide name="Pb207" ao="0.221"/>
+      <nuclide name="Pb208" ao="0.524"/>
     </material>
-    <material id="17" name="placeholder">
+    <material id="22" name="placeholder">
       <density value="1e-12" units="g/cm3"/>
       <nuclide name="H1" ao="0.99984426"/>
       <nuclide name="H2" ao="0.00015574"/>
@@ -172,19 +169,32 @@
   <geometry>
     <cell id="6000" fill="2" region="-10000 7001 -7002" universe="3"/>
     <cell id="10000" fill="5000" region="-10000" universe="2"/>
-    <dagmc_universe id="5000" filename="/opt/marathon/workspace/results/tokamak_with_tf_coils.h5m"/>
+    <dagmc_universe id="5000" filename="/opt/marathon/workspace/results/tokamak_shield_and_magnets.h5m"/>
     <surface id="7001" name="plane1" type="plane" boundary="reflective" coeffs="0 1 0 0"/>
     <surface id="7002" name="plane2" type="plane" boundary="reflective" coeffs="-0.984807753012208 0.17364817766693041 0.0 0"/>
-    <surface id="10000" type="sphere" boundary="vacuum" coeffs="402.2494119967532 340.82061343497224 -0.16718024706528922 727.0963838724365"/>
+    <surface id="10000" type="sphere" boundary="vacuum" coeffs="402.42305908239456 340.82061343497224 -0.16718024706528922 727.0075588900824"/>
   </geometry>
   <settings>
     <run_mode>fixed source</run_mode>
-    <particles>10</particles>
-    <batches>10</batches>
-    <source type="independent" strength="1.0" particle="neutron">
+    <particles>100000</particles>
+    <batches>25</batches>
+    <source type="independent" strength="0.4836601307189542" particle="neutron">
       <space type="cylindrical" origin="0.0 0.0 0.0">
         <r type="discrete">
-          <parameters>430.0 1.0</parameters>
+          <parameters>421.0 1.0</parameters>
+        </r>
+        <phi type="uniform" parameters="0 1.3962634015954636"/>
+        <z type="discrete">
+          <parameters>0.0 1.0</parameters>
+        </z>
+      </space>
+      <angle type="isotropic"/>
+      <energy type="powerlaw" parameters="1000.0 14500000.0 0.15"/>
+    </source>
+    <source type="independent" strength="0.5163398692810457" particle="photon">
+      <space type="cylindrical" origin="0.0 0.0 0.0">
+        <r type="discrete">
+          <parameters>421.0 1.0</parameters>
         </r>
         <phi type="uniform" parameters="0 1.3962634015954636"/>
         <z type="discrete">
@@ -193,227 +203,22 @@
       </space>
       <angle type="isotropic"/>
       <energy type="discrete">
-        <parameters>14100000.0 1.0</parameters>
+        <parameters>200000.0 1000000.0 3000000.0 0.25 0.5 0.25</parameters>
       </energy>
     </source>
     <output>
       <path>/opt/marathon/workspace/results</path>
       <tallies>false</tallies>
     </output>
+    <photon_transport>true</photon_transport>
   </settings>
   <tallies>
-    <filter id="3" type="surface">
-      <bins>1</bins>
-    </filter>
-    <filter id="4" type="particle">
-      <bins>neutron</bins>
-    </filter>
-    <filter id="5" type="surface">
-      <bins>2</bins>
-    </filter>
-    <filter id="7" type="surface">
-      <bins>3</bins>
-    </filter>
-    <filter id="9" type="surface">
-      <bins>4</bins>
-    </filter>
-    <filter id="11" type="surface">
-      <bins>5</bins>
-    </filter>
-    <filter id="13" type="surface">
-      <bins>6</bins>
-    </filter>
-    <filter id="15" type="surface">
-      <bins>7</bins>
-    </filter>
-    <filter id="17" type="surface">
-      <bins>8</bins>
-    </filter>
-    <filter id="19" type="surface">
-      <bins>9</bins>
-    </filter>
-    <filter id="21" type="surface">
-      <bins>10</bins>
-    </filter>
-    <filter id="23" type="surface">
-      <bins>11</bins>
-    </filter>
-    <filter id="25" type="surface">
+    <filter id="1" type="material">
       <bins>12</bins>
     </filter>
-    <filter id="27" type="surface">
-      <bins>13</bins>
-    </filter>
-    <filter id="29" type="surface">
-      <bins>14</bins>
-    </filter>
-    <filter id="31" type="surface">
-      <bins>15</bins>
-    </filter>
-    <filter id="33" type="surface">
-      <bins>16</bins>
-    </filter>
-    <filter id="35" type="surface">
-      <bins>17</bins>
-    </filter>
-    <filter id="37" type="surface">
-      <bins>18</bins>
-    </filter>
-    <filter id="39" type="surface">
-      <bins>19</bins>
-    </filter>
-    <filter id="41" type="surface">
-      <bins>20</bins>
-    </filter>
-    <filter id="43" type="surface">
-      <bins>21</bins>
-    </filter>
-    <filter id="45" type="surface">
-      <bins>22</bins>
-    </filter>
-    <filter id="47" type="surface">
-      <bins>23</bins>
-    </filter>
-    <filter id="49" type="surface">
-      <bins>24</bins>
-    </filter>
-    <filter id="51" type="surface">
-      <bins>25</bins>
-    </filter>
-    <filter id="53" type="surface">
-      <bins>26</bins>
-    </filter>
-    <filter id="55" type="surface">
-      <bins>27</bins>
-    </filter>
-    <filter id="57" type="surface">
-      <bins>28</bins>
-    </filter>
-    <filter id="59" type="surface">
-      <bins>29</bins>
-    </filter>
-    <filter id="61" type="surface">
-      <bins>30</bins>
-    </filter>
-    <tally id="2" name="neutron current across surface 1">
-      <filters>3 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="3" name="neutron current across surface 2">
-      <filters>5 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="4" name="neutron current across surface 3">
-      <filters>7 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="5" name="neutron current across surface 4">
-      <filters>9 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="6" name="neutron current across surface 5">
-      <filters>11 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="7" name="neutron current across surface 6">
-      <filters>13 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="8" name="neutron current across surface 7">
-      <filters>15 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="9" name="neutron current across surface 8">
-      <filters>17 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="10" name="neutron current across surface 9">
-      <filters>19 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="11" name="neutron current across surface 10">
-      <filters>21 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="12" name="neutron current across surface 11">
-      <filters>23 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="13" name="neutron current across surface 12">
-      <filters>25 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="14" name="neutron current across surface 13">
-      <filters>27 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="15" name="neutron current across surface 14">
-      <filters>29 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="16" name="neutron current across surface 15">
-      <filters>31 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="17" name="neutron current across surface 16">
-      <filters>33 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="18" name="neutron current across surface 17">
-      <filters>35 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="19" name="neutron current across surface 18">
-      <filters>37 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="20" name="neutron current across surface 19">
-      <filters>39 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="21" name="neutron current across surface 20">
-      <filters>41 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="22" name="neutron current across surface 21">
-      <filters>43 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="23" name="neutron current across surface 22">
-      <filters>45 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="24" name="neutron current across surface 23">
-      <filters>47 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="25" name="neutron current across surface 24">
-      <filters>49 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="26" name="neutron current across surface 25">
-      <filters>51 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="27" name="neutron current across surface 26">
-      <filters>53 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="28" name="neutron current across surface 27">
-      <filters>55 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="29" name="neutron current across surface 28">
-      <filters>57 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="30" name="neutron current across surface 29">
-      <filters>59 4</filters>
-      <scores>current</scores>
-    </tally>
-    <tally id="31" name="neutron current across surface 30">
-      <filters>61 4</filters>
-      <scores>current</scores>
+    <tally id="1" name="Heating in magnet material">
+      <filters>1</filters>
+      <scores>heating</scores>
     </tally>
   </tallies>
 </model>
