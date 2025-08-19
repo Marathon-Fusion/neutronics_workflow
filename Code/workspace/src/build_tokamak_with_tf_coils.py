@@ -19,7 +19,7 @@ os.makedirs(results_dir, exist_ok=True)
 ##### RADIAL LAYERS #####
 
 inner_reactor_edge = 210
-shield_thickness = 30
+shield_thickness = 35
 inner_shield_edge = inner_reactor_edge - shield_thickness
 
 channel_thickness = 21
@@ -57,7 +57,7 @@ tot_reactor_thickness = sum(thickness for i, (layertype, thickness) in enumerate
 #princeton d function tends to be unstable, be careful and always check outputs
 #even after changing simple things
 
-rotation_angle = 80
+rotation_angle = 80 #degrees, 4 coils
 
 def get_rotation_angle(deg = True):
     """Returns the rotation angle used.
@@ -83,8 +83,8 @@ coil_outer_r = coil_inner_r + thickness + tot_reactor_thickness + 2*gap_size - s
 
 def main():
 
-    print(f"Total reactor thickness (including shield): {tot_reactor_thickness}mm")
-    print(f"Inner radius of TF coil: {coil_inner_r}mm")
+    print(f"Total reactor thickness (including shield): {tot_reactor_thickness}cm")
+    print(f"Inner radius of TF coil: {coil_inner_r}cm")
 
     tf_coils = paramak.toroidal_field_coil_princeton_d(
         r1 = coil_inner_r,
@@ -92,7 +92,7 @@ def main():
         azimuthal_placement_angles=list(np.arange(0, rotation_angle, 20)), #20deg spacing like ARC 2015
         rotation_angle=rotation_angle,
         thickness = thickness, 
-        distance=48 #half correct value
+        distance=48
     )
 
     # rectangle_coil_height = 500
