@@ -136,7 +136,7 @@ def get_heating_tally(normalise=False):
 # get_outer_surface_leakage(particle='neutron')
 # get_outer_surface_leakage(particle='photon')
 
-#mesh_tally_to_vtk("neutron")
+mesh_tally_to_vtk("neutron")
 print(f"Total heating: {get_heating_tally(normalise=False)} kW")
 
 rough_vol_estimate = 4 * 0.4 * 0.48 * 2*np.pi*3.10 #assuming magnet coils are circles with 310cm radius

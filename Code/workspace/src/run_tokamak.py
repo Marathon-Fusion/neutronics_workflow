@@ -1,4 +1,5 @@
 import openmc
+import openmc.lib
 import numpy as np
 import openmc_source_plotter
 import os
@@ -13,14 +14,15 @@ os.makedirs(results_dir, exist_ok=True)
 
 ##### RUN INPUTS ##### (needs improvement, lots of settings still distributed all over the code)
 
-geometry_mode = 'shieldingonly' #'shieldingonly' or 'reactoronly or 'fullsim' are the options
+geometry_mode = 'fullsim' #'shieldingonly' or 'reactoronly or 'fullsim' are the options
 damage_speed = 'fastonly' #'fastonly' means only <0.1MeV neutrons will be tracked by magnet surface neutron tallies, useful for assessing magnet damage
-what_to_tally = ['neutrondamage', 'heating'] #'neutrondamage' or 'heating'
-source_energy = 'leakage' #'leakage' or 'mono'
-photons = True #include photon transport or no
+what_to_tally = ['neutrondamage'] #'neutrondamage' or 'heating'
+source_energy = 'mono' #'leakage' or 'mono'
+photons = False #include photon transport or no
+weight_windows = True
 
-batch_no = 20
-particle_no = 100000
+batch_no = 10
+particle_no = 10000
 
 ##### GEOMETRY FILE #####
 
@@ -307,6 +309,20 @@ geometry = openmc.Geometry([border_cell])
 
 print("Constructed geometry")
 
+##### VARIANCE REDUCTION MESH #####
+
+def make_var_mesh(dim=100):
+    var_mesh = openmc.RegularMesh.from_domain(domain=geometry,
+                                              dimension=[dim, dim, dim])
+    return var_mesh
+    
+var_mesh = make_var_mesh()
+
+if weight_windows == True:
+    wwg = openmc.WeightWindowGenerator(mesh=var_mesh,
+                                       energy_bounds=np.geomspace(0.02, 14.1e6, num=25),
+                                       particle_type='neutron')
+
 ##### GET SURFACE IDS FOR TF COILS #####
 
 if geometry_mode != 'reactoronly' and 'neutrondamage' in what_to_tally:
@@ -402,7 +418,7 @@ def surface_tally_from_pydagmc(surface_id, particle="neutron", damage_speed=dama
 
     return surface_tally
 
-def volumetric_flux_tally_by_grid(particle="neutron", name=None):
+def volumetric_flux_tally_regular_mesh(mesh, id, particle="neutron", name=None):
     """
     Returns an openmc.Tally object for flux through each element of a mesh
     for a specified particle type ('neutron' or 'photon').
@@ -419,24 +435,18 @@ def volumetric_flux_tally_by_grid(particle="neutron", name=None):
     openmc.Tally
         Configured OpenMC mesh tally for the requested particle.
     """
-    rgrid = np.arange(0, 945, 0.25)
-    phigrid = np.linspace(0, get_rotation_angle(deg=False), num=int(get_rotation_angle(deg=True)/2)) #2 degree steps
-    thetagrid = np.linspace(0, np.pi, 45) #4deg steps
-
-    mesh = openmc.SphericalMesh(r_grid=rgrid, 
-                                  phi_grid=phigrid,
-                                  theta_grid=thetagrid)
     
-    print(f"No. of mesh tally cells = {np.prod(mesh.dimension)}")
+    print(f"No. of regular mesh tally cells = {np.prod(mesh.dimension)}")
     mesh_filter = openmc.MeshFilter(mesh)
     p_filter = openmc.ParticleFilter([particle])
 
     if name is None:
-        name = f"{particle.capitalize()} flux in mesh"
+        name = f"{particle} flux in regular mesh"
 
     mesh_tally = openmc.Tally(name=name)
     mesh_tally.filters = [mesh_filter, p_filter]
     mesh_tally.scores = ['flux']
+    mesh_tally.id = id
 
     return mesh_tally
 
@@ -517,12 +527,16 @@ if geometry_mode == 'reactoronly':
 else:
     #tally volumetric flux and surface currents
     if 'neutrondamage' in what_to_tally:
-        tallies.append(volumetric_flux_from_mesh(meshfile="magnet_mesh.vtk", particle='both'))
+        #tallies.append(volumetric_flux_from_mesh(meshfile="magnet_mesh.vtk", particle='both'))
         for i in range(len(tf_surfaceobjs)):
             tallies.append(surface_tally_from_pydagmc(surface_id=i+1))
     #tally heating in magnet material
     if 'heating' in what_to_tally:
         tallies.append(heating_in_magnets())
+if weight_windows == True:
+    tallies.append(volumetric_flux_tally_regular_mesh(mesh=var_mesh,
+                                                      id=69,
+                                                      particle='neutron'))
 
 for tally in tallies:
     print(f"Tally '{tally.name}' added")
@@ -534,15 +548,34 @@ if photons == True:
     settings.photon_transport = True
     if source_energy == 'leakage':
         settings.source.append(p_source)
+if weight_windows == True:
+    settings.max_history_splits = 1000
+    settings.weight_window_generators = wwg
 settings.batches = batch_no
 settings.particles = particle_no
 settings.run_mode = 'fixed source'
 settings.output = {'path': results_dir, 'tallies': False}  # all output files now go to results_dir
 
 model = openmc.model.Model(geometry=geometry, settings=settings, materials=materials, tallies=tallies)
-model.run()
+model.export_to_model_xml(path='model.xml')
 
-print("Simulation finished")
+if weight_windows == True:
+    with openmc.lib.run_in_memory():
+        regular_mesh_flux_tally = openmc.lib.tallies[69]
+        wws = openmc.lib.WeightWindows.from_tally(regular_mesh_flux_tally, particle='neutron')
+
+        for i in range(5):
+            openmc.lib.run()
+
+            wws.update_magic(regular_mesh_flux_tally)
+
+            statepoint_name = f"statepoint_magic_{i+1}.h5"
+            openmc.lib.statepoint_write(filename=os.path.join(results_dir, statepoint_name))
+
+            openmc.lib.settings.weight_windows_on = True
+else:
+    model.run()
+        
 
 ##### RESULTS #####
 
@@ -557,6 +590,8 @@ results = openmc.StatePoint(statepoint_path)
 
 if photons == True:
     p_leakage = 0.00079
+else:
+    p_leakage = 0
 n_leakage = 0.00074 #both from 'reactoronly' geometry modes, tallying leakage into the shielding layer. no touchy
 total_leakage = p_leakage + n_leakage
 
