@@ -14,15 +14,23 @@ os.makedirs(results_dir, exist_ok=True)
 
 ##### RUN INPUTS ##### (needs improvement, lots of settings still distributed all over the code)
 
-geometry_mode = 'fullsim' #'shieldingonly' or 'reactoronly or 'fullsim' are the options
-damage_speed = 'fastonly' #'fastonly' means only <0.1MeV neutrons will be tracked by magnet surface neutron tallies, useful for assessing magnet damage
-what_to_tally = ['neutrondamage'] #'neutrondamage' or 'heating'
-source_energy = 'mono' #'leakage' or 'mono'
+## BASIC ##
+
+geometry_mode = 'fullsim' #'shieldingonly' or 'reactoronly or 'fullsim' are the option
+what_to_tally = ['neutrondamage'] #'neutrondamage' or 'heating' are valid inputs
 photons = False #include photon transport or no
 weight_windows = True
-
 batch_no = 10
 particle_no = 10000
+use_shield_mat = 'ti_hydride'
+
+## ADVANCED ##
+
+source_energy = 'mono' #'leakage' or 'mono'
+damage_speed = 'fastonly' #'fastonly' means only <0.1MeV neutrons will be tracked by magnet surface neutron tallies, useful for assessing magnet damage
+weight_windows_iterations = 5
+ww_mesh_dim = 30
+max_history_splits = 1000
 
 ##### GEOMETRY FILE #####
 
@@ -136,7 +144,7 @@ eurofer97_steel.temperature = 900.0
 
 tf_coil_mat = get_winding_material(name="tfcoil")
 
-# Neutron shield material
+# Neutron shield materials
 ti_hydride = openmc.Material(name='shield')
 ti_hydride.add_elements_from_formula("TiH2")
 ti_hydride.set_density('g/cm3', 3.75) #this is density for a powder I think? not sure about packing fraction or its relevance
@@ -181,13 +189,25 @@ placeholder = openmc.Material(name='placeholder')
 placeholder.add_element("H", 1.0)
 placeholder.set_density('g/cm3', 1e-12) #chosen arbitrarily but effectively 0
 
-#full list for sim
-materials_list = [tungsten, vanadium_alloy, channel_mat, blanket_mat, ti_hydride, placeholder, tf_coil_mat, eurofer97_steel]
+#full list not counting shield material
+materials_list = [tungsten, vanadium_alloy, channel_mat, blanket_mat, placeholder, tf_coil_mat, eurofer97_steel]
 
-def get_materials(materials_list):
-    return openmc.Materials(materials_list)
+if use_shield_mat == 'ti_hydride': #this is surely a bad way to do this, but its easy to read
+    shield_mat = ti_hydride
+elif use_shield_mat == 'zr_hydride':
+    shield_mat = zr_hydride
+elif use_shield_mat == 'zr_boro':
+    shield_mat = zr_boro
+elif use_shield_mat == 'wc':
+    shield_mat = WC
+elif use_shield_mat == 'pb':
+    shield_mat = Pb
+elif use_shield_mat == 'wc_haf':
+    shield_mat = nickel_haf
 
-materials = get_materials(materials_list)
+materials_list.append(shield_mat)
+
+materials = openmc.Materials(materials_list)
 
 ##### NEUTRON SOURCE #####
 
@@ -311,12 +331,12 @@ print("Constructed geometry")
 
 ##### VARIANCE REDUCTION MESH #####
 
-def make_var_mesh(dim=100):
+def make_var_mesh(dim):
     var_mesh = openmc.RegularMesh.from_domain(domain=geometry,
                                               dimension=[dim, dim, dim])
     return var_mesh
     
-var_mesh = make_var_mesh()
+var_mesh = make_var_mesh(ww_mesh_dim)
 
 if weight_windows == True:
     wwg = openmc.WeightWindowGenerator(mesh=var_mesh,
@@ -549,7 +569,7 @@ if photons == True:
     if source_energy == 'leakage':
         settings.source.append(p_source)
 if weight_windows == True:
-    settings.max_history_splits = 1000
+    settings.max_history_splits = max_history_splits
     settings.weight_window_generators = wwg
 settings.batches = batch_no
 settings.particles = particle_no
@@ -564,7 +584,8 @@ if weight_windows == True:
         regular_mesh_flux_tally = openmc.lib.tallies[69]
         wws = openmc.lib.WeightWindows.from_tally(regular_mesh_flux_tally, particle='neutron')
 
-        for i in range(5):
+        for i in range(weight_windows_iterations):
+
             openmc.lib.run()
 
             wws.update_magic(regular_mesh_flux_tally)
