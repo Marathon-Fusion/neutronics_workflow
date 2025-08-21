@@ -4,7 +4,14 @@ import matplotlib.pyplot as plt
 from build_tokamak_with_tf_coils import get_rotation_angle
 import numpy as np
 
+##### RUN INPUTS #####
+
 batch_no = 50
+heating_tally = False
+flux_mesh_tally = True
+surface_current_tally = True
+
+##### GET RESULTS FILE #####
 
 print(f"Current file path: {os.path.dirname(__file__)}")
 results_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'results'))

@@ -12,12 +12,13 @@ results_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'res
 print(f"Results directory location: {results_dir}")
 os.makedirs(results_dir, exist_ok=True)
 
-##### RUN INPUTS ##### (needs improvement, lots of settings still distributed all over the code)
+##### RUN INPUTS #####
 
 ## BASIC ##
 
-geometry_mode = 'fullsim' #'shieldingonly' or 'reactoronly or 'fullsim' are the option
-what_to_tally = ['neutrondamage'] #'neutrondamage' or 'heating' are valid inputs
+preset = 'arc2015' #'arc2015', 'marathonpaper', or 'custom'
+geometry_mode = 'fullsim' #'shieldingonly' or 'reactoronly or 'fullsim'
+what_to_tally = ['neutrondamage'] #'neutrondamage' and/or 'heating' are valid inputs
 photons = False #include photon transport or no
 weight_windows = True
 batch_no = 10
@@ -35,19 +36,21 @@ max_history_splits = 1000
 ##### GEOMETRY FILE #####
 
 if geometry_mode == 'fullsim':
-    geom_h5m_filename = "tokamak_with_tf_coils.h5m"
+    suffix = "whole"
 elif geometry_mode == 'shieldingonly':
-    geom_h5m_filename = "tokamak_shield_and_magnets.h5m"
+    suffix = "shieldwithmagnets"
 elif geometry_mode == 'reactoronly':
-    geom_h5m_filename = "tokamak_reactor_only.h5m"
+    suffix = "onlyreactor"
 else:
     raise ValueError("Invalid run mode specified. Run mode must be of type 'fullsim', 'reactoronly', or 'shieldingonly'.")
+
+geom_h5m_filename = f"{preset}_{suffix}.h5m"
 
 geometry_h5m = os.path.join(results_dir, geom_h5m_filename)
 
 print(f"Using geometry file {geometry_h5m} for run mode '{geometry_mode}'")
 
-plasma_centre_position = 421 #centre of plasma layer
+plasma_centre_position = 420 #centre of plasma layer
 
 ##### MATERIALS DEFINITION #####
 
@@ -62,6 +65,30 @@ vanadium_alloy.set_density('g/cm3', 6.05)
 vanadium_alloy.add_element('V', 0.92, 'wo')
 vanadium_alloy.add_element('Cr', 0.04, 'wo')
 vanadium_alloy.add_element('Ti', 0.04, 'wo')
+
+#channel replaced with more VV in arc 2015
+
+inconel_comp = [("Ni", 0.525),
+                ("Cr", 0.19),
+                ("Nb", 0.05),
+                ("Mo", 0.031),
+                ("Ti", 0.009),
+                ("Al", 0.005),
+                ("Co", 0.005),
+                ("C", 0.0004),
+                ("Mn", 0.00175),
+                ("Si", 0.00175),
+                ("P", 0.00075),
+                ("S", 0.00075),
+                ("B", 0.00003),
+                ("Cu", 0.0015)]
+
+remaining_fe_frac = 1-sum(wtfrac for (element, wtfrac) in inconel_comp)
+inconel = openmc.Material(name='channel_mat')
+for (element, wtfrac) in inconel_comp:
+    inconel.add_element(element, wtfrac, percent_type='wo')
+inconel.add_element("Fe", remaining_fe_frac, percent_type='wo')
+inconel.set_density('g/cm3', 8.19)
 
 #Transmutation channel#
 mercury_dens = 13.6 #liquid hg
@@ -190,7 +217,12 @@ placeholder.add_element("H", 1.0)
 placeholder.set_density('g/cm3', 1e-12) #chosen arbitrarily but effectively 0
 
 #full list not counting shield material
-materials_list = [tungsten, vanadium_alloy, channel_mat, blanket_mat, placeholder, tf_coil_mat, eurofer97_steel]
+materials_list = [tungsten, vanadium_alloy, blanket_mat, placeholder, tf_coil_mat, eurofer97_steel] #basically always used
+
+if preset == 'arc2015':
+    materials_list.append(inconel)
+else:
+    materials_list.append(channel_mat)
 
 if use_shield_mat == 'ti_hydride': #this is surely a bad way to do this, but its easy to read
     shield_mat = ti_hydride
