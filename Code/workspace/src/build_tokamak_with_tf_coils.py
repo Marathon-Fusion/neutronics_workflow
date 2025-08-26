@@ -20,24 +20,24 @@ os.makedirs(results_dir, exist_ok=True)
 
 ## BASIC ##
 
-radial_build_preset = 'arc2015' #'arc2015' or 'marathonpaper' or 'custom'
+radial_build_preset = 'custom' #'arc2015' or 'marathonpaper' or 'custom'
 
 #plasma out
 custom_layers = [(paramak.LayerType.PLASMA, 120, "placeholder"), #plasma thickness should be half actual thickness, will be doubled later
                  (paramak.LayerType.GAP, 6, None), #all other thicknesses normal
-                 (paramak.LayerType.SOLID, 0.5, "tungsten"),
+                 (paramak.LayerType.SOLID, 1, "tungsten"),
                  (paramak.LayerType.SOLID, 1, "vanadium_alloy"),
                  (paramak.LayerType.SOLID, 21, "channel_mat"),
                  (paramak.LayerType.SOLID, 3, "vanadium_alloy"),
                  (paramak.LayerType.SOLID, 55, "blanket_mat"),
                  (paramak.LayerType.SOLID, 3, "blanketouter"),
-                 (paramak.LayerType.SOLID, 50, "shield")] #the 'shield' tag must stay as 'shield' for the partial geometry extraction later to work
+                 (paramak.LayerType.SOLID, 40, "shield")] #the 'shield' tag must stay as 'shield' for the partial geometry extraction later to work
 custom_major_rad = 420
 
 ## ADVANCED ##
 
 marathonpaper_shield_thickness = 50
-coil_shield_gap = 20 #gap between inboard edge of shield and inner edge of magnet coil
+coil_shield_gap = 25 #gap between inboard edge of shield and inner edge of magnet coil
 tf_coil_radial_thickness = 40
 tf_coil_azimuthal_thickness = 48
 rotation_angle = 40 #degrees
@@ -47,15 +47,7 @@ tf_coil_placement_angle = 20 #degrees
 
 assert radial_build_preset in ('arc2015', 'marathonpaper', 'custom'), "Unrecognised radial build preset. Must be 'arc2015', 'marathonpaper', or 'custom'."
 
-if radial_build_preset == 'arc2015':
-    firstwall_thickness = 1
-    channel_thickness = 7
-    blanket_inboard = 20
-    blanket_outboard = blanket_inboard
-    shield_thickness = 51
-    inner_reactor_edge = 258 #based on inboard reactor thickness being 48cm smaller for arc than marathon paper, this should equalise plasma location
-    inner_shield_edge = inner_reactor_edge - shield_thickness
-elif radial_build_preset == 'marathonpaper':
+if radial_build_preset == 'marathonpaper':
     firstwall_thickness = 0.5
     channel_thickness = 21
     blanket_inboard = 54.5
@@ -64,7 +56,7 @@ elif radial_build_preset == 'marathonpaper':
     shield_thickness = marathonpaper_shield_thickness
     inner_shield_edge = inner_reactor_edge - marathonpaper_shield_thickness
 
-if radial_build_preset in ('arc2015, marathonpaper'):
+if radial_build_preset == 'marathonpaper':
     radial_build=[
                 (paramak.LayerType.GAP, inner_shield_edge),
                 (paramak.LayerType.SOLID, 1), # placeholder
@@ -87,6 +79,36 @@ if radial_build_preset in ('arc2015, marathonpaper'):
                 (paramak.LayerType.SOLID, 3), # blanketouter
                 (paramak.LayerType.SOLID, shield_thickness) #neutron shield
                 ]
+elif radial_build_preset == 'arc2015':
+
+    channel_thickness = 20
+    shield_thickness = 51
+    major_rad = 420
+
+    radial_build=[
+                (paramak.LayerType.SOLID, 1), # central column
+                (paramak.LayerType.GAP, 1),
+                (paramak.LayerType.SOLID, shield_thickness), # neutron shield
+                (paramak.LayerType.SOLID, 3), # thermal shield
+                (paramak.LayerType.SOLID, 3), # blanket tank
+                (paramak.LayerType.SOLID, channel_thickness), # flibe blanket
+                (paramak.LayerType.SOLID, 7), # vv
+                (paramak.LayerType.SOLID, 1), # first wall
+                (paramak.LayerType.GAP, 3), # gap
+                (paramak.LayerType.PLASMA, 214), # plasma
+                (paramak.LayerType.GAP, 3), # gap
+                (paramak.LayerType.SOLID, 1), # first wall
+                (paramak.LayerType.SOLID, 7), # vv
+                (paramak.LayerType.SOLID, channel_thickness), # flibe blanket
+                (paramak.LayerType.SOLID, 3), # blanket tank
+                (paramak.LayerType.SOLID, 3), # thermal shield
+                (paramak.LayerType.SOLID, shield_thickness) #neutron shield
+                ]
+    
+    halfthickness = paramak.utils.sum_up_to_plasma(radial_build)
+    plasmathickness = [thickness for (type, thickness) in radial_build if type == paramak.LayerType.PLASMA][0]
+    inner_shield_edge = major_rad - plasmathickness/2 - halfthickness
+    radial_build.insert(0, (paramak.LayerType.GAP, inner_shield_edge))
 else:
     for i, (layertype, thickness, tag) in enumerate(custom_layers):
         if i == 0:
@@ -129,8 +151,9 @@ def get_rotation_angle(deg = True):
         return rotation_angle*np.pi/180
 
 #coil radii are weird
-#inner radius is side closest to centre on inboard side
-#outer radius is ALSO side closest to centre on outboard side
+#inner radius is side closest to centre of torus on inboard side
+#outer radius is ALSO side closest to centre of torus on outboard side, not side furthest away as you might expect
+
 coil_inner_r = inner_shield_edge - tf_coil_radial_thickness - coil_shield_gap
 
 coil_outer_r = coil_inner_r + tf_coil_radial_thickness + tot_reactor_thickness + 2*coil_shield_gap #designed to keep gap size the same on inboard and outboard
@@ -139,7 +162,7 @@ azimuthal_placement_angles = list(np.arange(0, rotation_angle, tf_coil_placement
 
 tf_coil_number = len(azimuthal_placement_angles)
 
-#again this princeton coil function is not very stable, check output is correct every time even after changing innocuous things
+#this princeton coil function can be unstable for large dimensions (~10x current dimensions), check output is correct if 
 
 def main():
 
@@ -214,23 +237,34 @@ def main():
                     if type==paramak.LayerType.SOLID and tag == 'shield':
                         material_tags.append(tag)
                 material_tags.insert(0, "tfcoil") #tf coils, always first
-        else: #applies to both arc2015 and marathon_paper
+        elif radial_build_preset == 'arc2015':
+            if section == 'whole':
+                material_tags = ["placeholder", #central column
+                                 "tungsten", #first wall
+                                 "inconel", #vv
+                                 "blanket_mat", #flibe
+                                 "inconel", #blanket tank
+                                 "alsiwool",
+                                 "shield",
+                                 "placeholder"] #plasma
+                for i in range(tf_coil_number):
+                    material_tags.insert(0, "tfcoil")
+            else:
+                raise NotImplementedError("No partial geometry exporting")
+        elif radial_build_preset == 'marathonpaper': #applies to both arc2015 and marathon_paper
             if section=='whole':
-                material_tags = ["placeholder", #layer_1
-                                    "tungsten", #layer_2
-                                    "vanadium_alloy", #layer_3
-                                    "channel_mat", #layer_4
-                                    "vanadium_alloy", #layer_5
-                                    "blanket_mat", #layer_6
-                                    "blanketouter", #layer_7
-                                    "shield", #layer_8
-                                    "placeholder"] #plasma
-                if radial_build_preset == 'marathonpaper':
-                    material_tags.insert(0, "tfcoil") #only one needed here since the coils tend to overlap and create only one volume
-                elif radial_build_preset == 'arc2015':
-                    for i in range(tf_coil_number):
-                        material_tags.insert(0, "tfcoil")
-            #below is an example of how you could remove certain volumes if you wanted to reimplement this feature
+                material_tags = ["tfcoil" #extra_cut_shapes_1, only one needed here since the coils tend to overlap and create only one volume
+                                "placeholder", #layer_1
+                                "tungsten", #layer_2
+                                "vanadium_alloy", #layer_3
+                                "channel_mat", #layer_4
+                                "vanadium_alloy", #layer_5
+                                "blanket_mat", #layer_6
+                                "blanketouter", #layer_7
+                                "shield", #layer_8
+                                "placeholder"] #plasma
+                
+            #below is an example of how you could remove only certain volumes if you wanted to reimplement partial geometry extraction
             elif section=='onlyreactor':
                 # for i, assembly in enumerate(ids):
                     # if i == 0 or i == 8: #first volume (magnet coils) or 9th volume (shield)
@@ -260,7 +294,7 @@ def main():
 
         #remove condemned volumes - currently will not do anything
         for id in for_removal:
-            id_to_remove = id.split("/")[-1] #only volume name, not hash string in front
+            id_to_remove = id.split("/")[-1] #only volume name, not random string in front
             trimmed_reactor = reactor_copy.remove(id_to_remove)
             print(f"Removed volume {id_to_remove} from reactor copy...")
             reactor_copy = copy.copy(trimmed_reactor)

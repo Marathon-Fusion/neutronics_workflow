@@ -6,10 +6,10 @@ import numpy as np
 
 ##### RUN INPUTS #####
 
-batch_no = 50
-heating_tally = False
-flux_mesh_tally = True
-surface_current_tally = True
+batch_no = 10
+heating_tally = True
+flux_mesh_tally = False
+surface_current_tally = False
 
 ##### GET RESULTS FILE #####
 
@@ -45,7 +45,6 @@ reactor_power = 1.5e9 #1500MWth
 e_per_fusion = 17.6 * 1.6e-13 #17.6MeV
 n_per_s = reactor_power / e_per_fusion
 n_per_year = n_per_s * 60 * 60 * 24 * 365.25
-#dont need to multiply by slice proportion of whole reactor since only total neutrons is affected by the slice size, not neutrons per unit area
 
 def get_surface_current(surface_id, particle='neutron', normalise=True):
     tally_name = f"{particle} current across surface {surface_id}"
@@ -127,6 +126,10 @@ def get_heating_tally(normalise=False):
     heating_tally = results.get_tally(name=tally_name)
     resultsdf = heating_tally.get_pandas_dataframe()
     heat_per_source_particle_eV = sum(resultsdf['mean'])
+    sd_per_source_eV = sum(resultsdf['std. dev.'])
+    sd_mean_ratio = sd_per_source_eV/heat_per_source_particle_eV
+    if sd_mean_ratio > 0.05:
+        print(f"Relative std. dev. of volumetric heating: {sd_mean_ratio}")
     heat_per_neutron_eV = heat_per_source_particle_eV / n_strength
     heat_per_neutron_J = heat_per_neutron_eV * 1.6e-19
     if normalise == False:
@@ -143,11 +146,5 @@ def get_heating_tally(normalise=False):
 # get_outer_surface_leakage(particle='neutron')
 # get_outer_surface_leakage(particle='photon')
 
-mesh_tally_to_vtk("neutron")
+#mesh_tally_to_vtk("neutron")
 print(f"Total heating: {get_heating_tally(normalise=False)} kW")
-
-rough_vol_estimate = 4 * 0.4 * 0.48 * 2*np.pi*3.10 #assuming magnet coils are circles with 310cm radius
-vol_from_solidworks = 17786174010 * 1e-9 #output from solidworks in mm^3 for 35cm shield thickness, so converting to m^3
-
-print(f"Total magnet volume: ~18 m^3")
-print(f"Volumetric heating: ~{get_heating_tally()/18} kW/m^3")

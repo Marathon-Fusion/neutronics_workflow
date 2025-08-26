@@ -16,22 +16,23 @@ os.makedirs(results_dir, exist_ok=True)
 
 ## BASIC ##
 
-preset = 'arc2015' #'arc2015', 'marathonpaper', or 'custom'
-geometry_mode = 'fullsim' #'shieldingonly' or 'reactoronly or 'fullsim'
-what_to_tally = ['neutrondamage'] #'neutrondamage' and/or 'heating' are valid inputs
-photons = False #include photon transport or no
+preset = 'custom' #'arc2015', 'marathonpaper', or 'custom'
+geometry_mode = 'fullsim' #'shieldingonly' or 'reactoronly' or 'fullsim'
+what_to_tally = ['neutrondamage', 'heating'] #'neutrondamage' and/or 'heating' are valid inputs
+photons = True #include photon transport or no
 weight_windows = True
 batch_no = 10
-particle_no = 10000
-use_shield_mat = 'ti_hydride'
+particle_no = 50000
 
 ## ADVANCED ##
 
 source_energy = 'mono' #'leakage' or 'mono'
 damage_speed = 'fastonly' #'fastonly' means only <0.1MeV neutrons will be tracked by magnet surface neutron tallies, useful for assessing magnet damage
-weight_windows_iterations = 5
+weight_windows_iterations = 2
 ww_mesh_dim = 30
-max_history_splits = 1000
+max_history_splits = 5000
+use_shield_mat = 'ti_hydride'
+use_channel_mat = 'Be'
 
 ##### GEOMETRY FILE #####
 
@@ -84,7 +85,7 @@ inconel_comp = [("Ni", 0.525),
                 ("Cu", 0.0015)]
 
 remaining_fe_frac = 1-sum(wtfrac for (element, wtfrac) in inconel_comp)
-inconel = openmc.Material(name='channel_mat')
+inconel = openmc.Material(name='inconel')
 for (element, wtfrac) in inconel_comp:
     inconel.add_element(element, wtfrac, percent_type='wo')
 inconel.add_element("Fe", remaining_fe_frac, percent_type='wo')
@@ -135,6 +136,12 @@ li7_percent = li_percent * 0.1
 channel_mat.add_nuclide('Li6', li6_percent/100.0, 'ao')
 channel_mat.add_nuclide('Li7', li7_percent/100.0, 'ao')
 
+#Alt. channel material
+
+Be = openmc.Material(name='channel_mat')
+Be.add_element('Be', 1.0)
+Be.set_density('g/cm3', 1.85)
+
 #Blanket#
 blanket_mat = openmc.Material(name='blanket_mat')
 blanket_mat.set_density('g/cm3', 1.94)
@@ -170,6 +177,12 @@ eurofer97_steel.temperature = 900.0
 # tf coil material
 
 tf_coil_mat = get_winding_material(name="tfcoil")
+
+# aluminium silicate wool
+
+alsi_wool = openmc.Material(name='alsiwool')
+alsi_wool.add_elements_from_formula("Al2SiO5")
+alsi_wool.set_density('g/cm3', 0.12) #from some random manufacturer's website
 
 # Neutron shield materials
 ti_hydride = openmc.Material(name='shield')
@@ -210,19 +223,28 @@ wc_haf = openmc.Material.mix_materials(materials=[WC, hf_hydride],
                                        percent_type='vo',
                                        name='shield')
 
-#placeholder - effectively vacuum
+#placeholder - effectively vacuum, for central column and plasma
 
 placeholder = openmc.Material(name='placeholder')
 placeholder.add_element("H", 1.0)
 placeholder.set_density('g/cm3', 1e-12) #chosen arbitrarily but effectively 0
 
-#full list not counting shield material
-materials_list = [tungsten, vanadium_alloy, blanket_mat, placeholder, tf_coil_mat, eurofer97_steel] #basically always used
+#materials used by both presets
+materials_list = [tungsten, blanket_mat, placeholder, tf_coil_mat]
 
 if preset == 'arc2015':
     materials_list.append(inconel)
+    materials_list.append(alsi_wool)
 else:
+    materials_list.append(vanadium_alloy)
+    materials_list.append(eurofer97_steel)
+
+if use_channel_mat == 'Be':
+    materials_list.append(Be)
+elif use_channel_mat == 'LiHg':
     materials_list.append(channel_mat)
+else:
+    raise ValueError("Unrecognised channel material.")
 
 if use_shield_mat == 'ti_hydride': #this is surely a bad way to do this, but its easy to read
     shield_mat = ti_hydride
@@ -283,7 +305,7 @@ def make_photon_ring_source(r):
 
     return p_source
 
-n_source = make_n_ring_source(r=plasma_centre_position, energy=source_energy, plot=True) #r is inner reactor edge + half reactor thickness
+n_source = make_n_ring_source(r=plasma_centre_position, energy=source_energy, plot=True) #r is major rad of torus
 if source_energy == 'leakage':
     p_leakage = 0.00079
     n_leakage = 0.00074 #both from 'reactoronly' geometry modes, tallying leakage into the shielding layer. no touchy
@@ -641,7 +663,7 @@ n_per_year = n_per_s * 60 * 60 * 24 * 365.25
 statepoint_path = os.path.join(results_dir, f"statepoint.{batch_no}.h5")
 results = openmc.StatePoint(statepoint_path)
 
-if photons == True:
+if photons == True and source_energy == 'leakage':
     p_leakage = 0.00079
 else:
     p_leakage = 0
