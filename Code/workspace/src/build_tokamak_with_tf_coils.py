@@ -37,7 +37,7 @@ custom_major_rad = 420
 ## ADVANCED ##
 
 marathonpaper_shield_thickness = 50
-coil_shield_gap = 25 #gap between inboard edge of shield and inner edge of magnet coil
+coil_shield_gap = 25 #gap between inboard edge of shield and inner edge of magnet coil, 25cm is big enough to avoid overlap between tf coils and central column
 tf_coil_radial_thickness = 40
 tf_coil_azimuthal_thickness = 48
 rotation_angle = 40 #degrees
